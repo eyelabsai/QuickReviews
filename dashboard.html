@@ -20,7 +20,6 @@
       align-items: center;
     }
 
-    /* Top logo */
     .logo-container {
       padding: 1rem;
       text-align: center;
@@ -31,7 +30,6 @@
       max-width: 100%;
     }
 
-    /* Header bar */
     .header {
       width: 100%;
       background-color: #007bff;
@@ -43,7 +41,6 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* Form card */
     .card {
       background: #ffffff;
       padding: 2rem;
@@ -126,7 +123,7 @@
     <img src="https://via.placeholder.com/200x60?text=Your+Logo" alt="Logo">
   </div>
 
-  <!-- Colored Header Bar -->
+  <!-- Header Bar -->
   <div class="header">
     Review for: Matt Hirabayashi, MD
   </div>
@@ -173,7 +170,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
 
-  <!-- Firebase Config and Auth Redirect -->
+  <!-- Firebase Config and Auth Check -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
@@ -193,6 +190,48 @@
         window.location.href = "index.html";
       }
     });
+
+    // --- Seed data (run once) ---
+    const db = firebase.firestore();
+
+    const usersToAdd = [
+      {
+        id: "matthira",
+        fullName: "Matthew Hirabayashi, MD",
+        reviewLink: "https://www.google.com/search?...",
+        email: "matthira@ezreview.com"
+      },
+      {
+        id: "gvirdi",
+        fullName: "Gurpal Virdi",
+        reviewLink: "https://gurpalvirdi.com/",
+        email: "gvirdi@ezreview.com"
+      },
+      {
+        id: "tcole",
+        fullName: "Troy Cole",
+        reviewLink: "https://troycole.com/about/",
+        email: "tcole@ezreview.com"
+      }
+    ];
+
+    async function seedUserData() {
+      for (const user of usersToAdd) {
+        try {
+          await db.collection("users").doc(user.id).set({
+            fullName: user.fullName,
+            reviewLink: user.reviewLink,
+            email: user.email
+          });
+          console.log(`✅ ${user.id} added to Firestore`);
+        } catch (err) {
+          console.error(`❌ Error adding ${user.id}:`, err);
+        }
+      }
+    }
+
+    // Uncomment to seed once, then comment again
+    // seedUserData();
   </script>
 
 </body>
