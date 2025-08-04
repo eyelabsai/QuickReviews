@@ -5,6 +5,27 @@
   <title>Login | Feedback Tool</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase JS SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+    authDomain: "ezreview-ee8f0.firebaseapp.com",
+    projectId: "ezreview-ee8f0",
+    storageBucket: "ezreview-ee8f0.firebasestorage.app",
+    messagingSenderId: "985522835249",
+    appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+    measurementId: "G-RBB28JDVJW"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+</script>
+
 </head>
 <body>
 
