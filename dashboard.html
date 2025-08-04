@@ -18,6 +18,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+
+      <script>
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = "index.html"; // redirect if not logged in
+    }
+  });
+</script>
     }
 
     /* Top logo */
