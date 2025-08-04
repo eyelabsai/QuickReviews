@@ -18,14 +18,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-
-      <script>
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (!user) {
-      window.location.href = "index.html"; // redirect if not logged in
-    }
-  });
-</script>
     }
 
     /* Top logo */
@@ -163,21 +155,45 @@
         <input type="tel" id="phone" placeholder="1234567890" required pattern="[0-9]{10}">
       </div>
 
-       <div class="form-group full">
+      <div class="form-group full">
         <button type="submit">Send</button>
       </div>
 
-      <!-- New option below Send -->
       <div class="form-group full" style="text-align: center;">
         <button type="button" onclick="alert('Review Assist Client triggered')">
           Send Review Assist Client
         </button>
       </div>
-
-      </div>
     </form>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
+
+  <!-- Firebase Config and Auth Redirect -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+      authDomain: "ezreview-ee8f0.firebaseapp.com",
+      projectId: "ezreview-ee8f0",
+      storageBucket: "ezreview-ee8f0.firebasestorage.app",
+      messagingSenderId: "985522835249",
+      appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+      measurementId: "G-RBB28JDVJW"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
+  </script>
+
 </body>
 </html>
-
