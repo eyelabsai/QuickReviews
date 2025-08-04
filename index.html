@@ -6,28 +6,26 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Firebase JS SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+  <!-- Firebase JS SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
 
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+      authDomain: "ezreview-ee8f0.firebaseapp.com",
+      projectId: "ezreview-ee8f0",
+      storageBucket: "ezreview-ee8f0.firebasestorage.app",
+      messagingSenderId: "985522835249",
+      appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+      measurementId: "G-RBB28JDVJW"
+    };
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
-    authDomain: "ezreview-ee8f0.firebaseapp.com",
-    projectId: "ezreview-ee8f0",
-    storageBucket: "ezreview-ee8f0.firebasestorage.app",
-    messagingSenderId: "985522835249",
-    appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
-    measurementId: "G-RBB28JDVJW"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  firebase.analytics();
-</script>
-
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+  </script>
 </head>
 <body>
 
@@ -46,8 +44,8 @@
     <h2>Login</h2>
     <form id="loginForm">
       <div class="form-group full">
-        <label for="username">Username</label>
-        <input type="text" id="username" required>
+        <label for="username">Email</label>
+        <input type="email" id="username" required>
       </div>
 
       <div class="form-group full">
@@ -59,10 +57,26 @@
         <button type="submit" class="submit-btn">Login</button>
       </div>
 
-      <p id="error" style="color:red; display:none; text-align:center;">Invalid credentials</p>
+      <p id="error" style="color:red; display:none; text-align:center;"></p>
     </form>
   </div>
 
-  <script src="js/login.js"></script>
+  <!-- Firebase Login Logic -->
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        document.getElementById("error").innerText = error.message;
+        document.getElementById("error").style.display = "block";
+      }
+    });
+  </script>
 </body>
 </html>
