@@ -44,8 +44,8 @@
     <h2>Login</h2>
     <form id="loginForm">
       <div class="form-group full">
-        <label for="username">Email</label>
-        <input type="email" id="username" required>
+        <label for="username">Username</label>
+        <input type="text" id="username" required>
       </div>
 
       <div class="form-group full">
@@ -61,15 +61,25 @@
     </form>
   </div>
 
-  <!-- Firebase Login Logic -->
+  <!-- Username-Based Login Logic -->
   <script>
+    const db = firebase.firestore();
+
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const email = document.getElementById("username").value.trim();
+      const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
 
       try {
+        const userDoc = await db.collection("users").doc(username).get();
+        if (!userDoc.exists) {
+          throw new Error("Username not found");
+        }
+
+        const userData = userDoc.data();
+        const email = userData.email;
+
         await firebase.auth().signInWithEmailAndPassword(email, password);
         window.location.href = "dashboard.html";
       } catch (error) {
