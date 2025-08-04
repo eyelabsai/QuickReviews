@@ -61,7 +61,7 @@
     </form>
   </div>
 
-  <!-- Username-Based Login Logic -->
+  <!-- Username-Based Login Script -->
   <script>
     const db = firebase.firestore();
 
@@ -70,21 +70,27 @@
 
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
+      const errorElem = document.getElementById("error");
+      errorElem.style.display = "none";
 
       try {
-        const userDoc = await db.collection("users").doc(username).get();
-        if (!userDoc.exists) {
+        const querySnapshot = await db.collection("users")
+          .where("username", "==", username)
+          .limit(1)
+          .get();
+
+        if (querySnapshot.empty) {
           throw new Error("Username not found");
         }
 
-        const userData = userDoc.data();
-        const email = userData.email;
+        const userDoc = querySnapshot.docs[0];
+        const email = userDoc.data().email;
 
         await firebase.auth().signInWithEmailAndPassword(email, password);
         window.location.href = "dashboard.html";
       } catch (error) {
-        document.getElementById("error").innerText = error.message;
-        document.getElementById("error").style.display = "block";
+        errorElem.innerText = error.message;
+        errorElem.style.display = "block";
       }
     });
   </script>
