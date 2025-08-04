@@ -9,21 +9,3 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
     document.getElementById("error").style.display = "block";
   }
 });
-
-
-{
-  "hosting": {
-    "public": "./",                // Serve from the root directory
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
