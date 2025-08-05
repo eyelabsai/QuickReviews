@@ -89,7 +89,15 @@
 
         const email = userData.email;
 
+        // ✅ Sign in with Firebase Auth using email/password from Firestore
         await firebase.auth().signInWithEmailAndPassword(email, password);
+
+        // ✅ Optionally log to verify authentication state
+        console.log("✅ Logged in as:", firebase.auth().currentUser?.email);
+
+        // ✅ Store username in localStorage for dashboard use
+        localStorage.setItem("username", username);
+
         window.location.href = "dashboard.html";
       } catch (error) {
         errorElem.innerText = error.message;
