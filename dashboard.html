@@ -10,7 +10,6 @@
       margin: 0;
       padding: 0;
     }
-
     body {
       font-family: 'Inter', sans-serif;
       background: #eef2f7;
@@ -19,17 +18,14 @@
       flex-direction: column;
       align-items: center;
     }
-
     .logo-container {
       padding: 1rem;
       text-align: center;
     }
-
     .logo-container img {
       height: 60px;
       max-width: 100%;
     }
-
     .header {
       width: 100%;
       background-color: #007bff;
@@ -40,7 +36,6 @@
       font-weight: 500;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
-
     .card {
       background: #ffffff;
       padding: 2rem;
@@ -50,44 +45,42 @@
       width: 90%;
       margin-top: 2rem;
     }
-
     .card h2 {
       font-size: 1.6rem;
       margin-bottom: 1.5rem;
       color: #333;
       text-align: center;
     }
-
     form {
       display: grid;
       gap: 1.25rem;
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
     }
-
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
     label {
       font-size: 0.95rem;
       margin-bottom: 0.4rem;
       color: #555;
       font-weight: 500;
     }
-
-    input {
+    input, textarea {
       padding: 0.65rem;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 1rem;
       transition: border-color 0.2s;
     }
-
-    input:focus {
+    input:focus, textarea:focus {
       border-color: #007bff;
       outline: none;
     }
-
     button {
       background-color: #007bff;
       color: #fff;
@@ -99,17 +92,14 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
-
     button:hover {
       background-color: #0056b3;
     }
-
     @media (min-width: 600px) {
       form {
         grid-template-columns: 1fr 1fr;
         gap: 1rem 1.5rem;
       }
-
       .form-group.full {
         grid-column: 1 / -1;
       }
@@ -117,18 +107,12 @@
   </style>
 </head>
 <body>
-
-  <!-- Logo -->
   <div class="logo-container">
     <img src="https://via.placeholder.com/200x60?text=Your+Logo" alt="Logo">
   </div>
-
-  <!-- Header Bar -->
   <div class="header">
     Review for: Matt Hirabayashi, MD
   </div>
-
-  <!-- Main Form Card -->
   <div class="card">
     <h2>Enter Patient Info</h2>
     <form id="patientForm">
@@ -136,26 +120,42 @@
         <label for="firstName">First Name</label>
         <input type="text" id="firstName" required>
       </div>
-
       <div class="form-group">
         <label for="lastName">Last Name</label>
         <input type="text" id="lastName" required>
       </div>
-
       <div class="form-group">
         <label for="preferredName">Preferred Name</label>
         <input type="text" id="preferredName">
       </div>
-
       <div class="form-group">
         <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="1234567890" required pattern="[0-9]{10}">
+        <input type="tel" id="phone" placeholder="1234567890" pattern="[0-9]{10}" required>
       </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="example@email.com" required>
+      </div>
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="sendEmail">
+        <label for="sendEmail">Send via Email</label>
+      </div>
+      <div class="form-group checkbox-group">
+        <input type="checkbox" id="sendText">
+        <label for="sendText">Send via Text</label>
+      </div>
+      <div class="form-group full">
+        <label for="message">Custom Message</label>
+        <textarea id="message" rows="5">Hello [preferred name],
 
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!
+
+Thanks!
+Sarah</textarea>
+      </div>
       <div class="form-group full">
         <button type="submit">Send</button>
       </div>
-
       <div class="form-group full" style="text-align: center;">
         <button type="button" onclick="alert('Review Assist Client triggered')">
           Send Review Assist Client
@@ -163,14 +163,10 @@
       </div>
     </form>
   </div>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
-
-  <!-- Firebase Config and Auth Check -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
@@ -181,58 +177,13 @@
       appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
       measurementId: "G-RBB28JDVJW"
     };
-
     firebase.initializeApp(firebaseConfig);
     firebase.analytics();
-
-    firebase.auth().onAuthStateChanged(function(user) {
+    firebase.auth().onAuthStateChanged(user => {
       if (!user) {
         window.location.href = "index.html";
       }
     });
-
-    // --- Seed data (run once) ---
-    const db = firebase.firestore();
-
-    const usersToAdd = [
-      {
-        id: "matthira",
-        fullName: "Matthew Hirabayashi, MD",
-        reviewLink: "https://www.google.com/search?...",
-        email: "matthira@ezreview.com"
-      },
-      {
-        id: "gvirdi",
-        fullName: "Gurpal Virdi",
-        reviewLink: "https://gurpalvirdi.com/",
-        email: "gvirdi@ezreview.com"
-      },
-      {
-        id: "tcole",
-        fullName: "Troy Cole",
-        reviewLink: "https://troycole.com/about/",
-        email: "tcole@ezreview.com"
-      }
-    ];
-
-    async function seedUserData() {
-      for (const user of usersToAdd) {
-        try {
-          await db.collection("users").doc(user.id).set({
-            fullName: user.fullName,
-            reviewLink: user.reviewLink,
-            email: user.email
-          });
-          console.log(`✅ ${user.id} added to Firestore`);
-        } catch (err) {
-          console.error(`❌ Error adding ${user.id}:`, err);
-        }
-      }
-    }
-
-    // Uncomment to seed once, then comment again
-    // seedUserData();
   </script>
-
 </body>
 </html>
