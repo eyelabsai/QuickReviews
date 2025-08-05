@@ -1,3 +1,4 @@
+<!-- ✅ index.html (Login Page) - Updated -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,12 +6,32 @@
   <title>Login | Feedback Tool</title>
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Firebase JS SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
+</head>
+<body>
+  <div class="logo-container">
+    <img src="assets/logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="header">Welcome to the Feedback Portal</div>
+  <div class="card">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <div class="form-group full">
+        <label for="username">Username</label>
+        <input type="text" id="username" required>
+      </div>
+      <div class="form-group full">
+        <label for="password">Password</label>
+        <input type="password" id="password" required>
+      </div>
+      <div class="form-group full">
+        <button type="submit" class="submit-btn">Login</button>
+      </div>
+      <p id="error" style="color:red; display:none; text-align:center;"></p>
+    </form>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -22,52 +43,12 @@
       appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
       measurementId: "G-RBB28JDVJW"
     };
-
     firebase.initializeApp(firebaseConfig);
     firebase.analytics();
-  </script>
-</head>
-<body>
-
-  <!-- Logo -->
-  <div class="logo-container">
-    <img src="assets/logo.png" alt="Logo" class="logo">
-  </div>
-
-  <!-- Header Bar -->
-  <div class="header">
-    Welcome to the Feedback Portal
-  </div>
-
-  <!-- Login Card -->
-  <div class="card">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <div class="form-group full">
-        <label for="username">Username</label>
-        <input type="text" id="username" required>
-      </div>
-
-      <div class="form-group full">
-        <label for="password">Password</label>
-        <input type="password" id="password" required>
-      </div>
-
-      <div class="form-group full">
-        <button type="submit" class="submit-btn">Login</button>
-      </div>
-
-      <p id="error" style="color:red; display:none; text-align:center;"></p>
-    </form>
-  </div>
-
-  <!-- Login Script (Firestore-only, no Firebase Auth) -->
-  <script>
     const db = firebase.firestore();
 
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-
       const username = document.getElementById("username").value.trim();
       const password = document.getElementById("password").value.trim();
       const errorElem = document.getElementById("error");
@@ -75,23 +56,13 @@
 
       try {
         const userDoc = await db.collection("users").doc(username).get();
-
-        if (!userDoc.exists) {
-          throw new Error("Username not found.");
-        }
-
+        if (!userDoc.exists) throw new Error("Username not found.");
         const userData = userDoc.data();
+        if (userData.password !== password) throw new Error("Incorrect password.");
 
-        if (userData.password !== password) {
-          throw new Error("Incorrect password.");
-        }
-
-        // Optional: Store session info
-        localStorage.setItem("username", username);
-
-        // Redirect to dashboard
+        localStorage.setItem("username", username); // session
+        localStorage.setItem("email", userData.email || "");
         window.location.href = "dashboard.html";
-
       } catch (error) {
         errorElem.innerText = error.message;
         errorElem.style.display = "block";
