@@ -63,8 +63,6 @@
 
   <!-- Login Script -->
   <script>
-    const db = firebase.firestore();
-
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -73,22 +71,9 @@
       const errorElem = document.getElementById("error");
       errorElem.style.display = "none";
 
+      const email = `${username}@ezreviews.com`;
+
       try {
-        const userDocRef = db.collection("users").doc(username);
-        const userDoc = await userDocRef.get();
-
-        if (!userDoc.exists) {
-          throw new Error("Username not found");
-        }
-
-        const userData = userDoc.data();
-
-        if (userData.password !== password) {
-          throw new Error("Incorrect password");
-        }
-
-        const email = userData.email;
-
         await firebase.auth().signInWithEmailAndPassword(email, password);
         window.location.href = "dashboard.html";
       } catch (error) {
