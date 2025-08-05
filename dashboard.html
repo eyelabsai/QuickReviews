@@ -128,7 +128,7 @@
 Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review: [link]
 
 Thanks!
-Sarah</textarea>
+Terri</textarea>
       </div>
       <div class="form-group full">
         <button type="submit">Send</button>
@@ -153,6 +153,7 @@ Sarah</textarea>
       const db = firebase.firestore();
 
       let userReviewLink = null;
+      let userFullname = null;
 
       firebase.auth().onAuthStateChanged(async user => {
         if (!user) {
@@ -164,8 +165,9 @@ Sarah</textarea>
           const snapshot = await db.collection("users").where("email", "==", user.email).limit(1).get();
           if (!snapshot.empty) {
             const data = snapshot.docs[0].data();
-            document.getElementById("headerText").textContent = `Review for: ${data.fullname}`;
             userReviewLink = data.reviewLink || null;
+            userFullname = data.fullname || "our team";
+            document.getElementById("headerText").textContent = `Review for: ${userFullname}`;
           } else {
             document.getElementById("headerText").textContent = "Review for: [Unknown User]";
           }
@@ -200,11 +202,8 @@ Sarah</textarea>
         }
 
         // Inject review link into message
-        if (userReviewLink) {
-          message = message.replace("[link]", userReviewLink);
-        } else {
-          message = message.replace("[link]", "[no review link available]");
-        }
+        const link = userReviewLink || "[no review link available]";
+        message = message.replace("[link]", link);
 
         try {
           if (sendText && phone && message) {
@@ -221,7 +220,7 @@ Sarah</textarea>
               message: {
                 subject: `We’d love your feedback, ${preferredName || "friend"}!`,
                 text: message,
-                html: message.replace(userReviewLink, `<a href="${userReviewLink}">${userReviewLink}</a>`)
+                html: message.replace(link, `<a href="${link}" target="_blank">${link}</a>`)
               }
             });
             alert("Email queued for delivery.");
