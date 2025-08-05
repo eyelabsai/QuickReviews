@@ -368,7 +368,7 @@
       window.location.href = "index.html";
       return;
     } else {
-      document.getElementById("headerText").textContent = `Review for: ${username}`;
+      document.getElementById("headerText").textContent = `Review for: ${fullname}`;
 
       // 📥 Fetch reviewLink from Firestore
       db.collection("users").doc(username).get().then(doc => {
