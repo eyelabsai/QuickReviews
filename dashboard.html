@@ -184,6 +184,21 @@ Sarah</textarea>
         window.location.href = "index.html";
       }
     });
+
+    // Auto-update preferred name in message
+    const preferredNameInput = document.getElementById("preferredName");
+    const messageBox = document.getElementById("message");
+
+    preferredNameInput.addEventListener("input", () => {
+      const name = preferredNameInput.value || "[preferred name]";
+      const defaultMessage = `Hello [preferred name],\n\nThank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!\n\nThanks!\nSarah`;
+
+      if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
+        messageBox.value = defaultMessage.replace("[preferred name]", name);
+      } else {
+        messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
+      }
+    });
   </script>
 </body>
 </html>
