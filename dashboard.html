@@ -123,3 +123,28 @@
       </div>
       <div class="form-group">
         <label for="preferredName">Preferred Name</label>
+
+        <script>
+  const preferredNameInput = document.getElementById("preferredName");
+  const messageBox = document.getElementById("message");
+
+  preferredNameInput.addEventListener("input", () => {
+    const preferredName = preferredNameInput.value.trim();
+    let currentMessage = messageBox.value;
+
+    // Replace all instances of [preferred name] or old name in "Hello ..." line
+    const updatedMessage = currentMessage.replace(/Hello .*,/, `Hello ${preferredName || "[preferred name]"},`);
+
+    // If the original message has the default pattern, update it
+    if (currentMessage.includes("Hello")) {
+      messageBox.value = updatedMessage;
+    }
+  });
+
+  // Optional: Initialize the message with default if empty
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!messageBox.value.trim()) {
+      messageBox.value = `Hello [preferred name],\n\nThank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!\n\nThanks!\nSarah`;
+    }
+  });
+</script>
