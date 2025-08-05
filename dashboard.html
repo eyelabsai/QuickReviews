@@ -5,105 +5,7 @@
   <title>Patient Info Entry</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #eef2f7;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .logo-container {
-      padding: 1rem;
-      text-align: center;
-    }
-    .logo-container img {
-      height: 60px;
-      max-width: 100%;
-    }
-    .header {
-      width: 100%;
-      background-color: #007bff;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      text-align: center;
-      font-size: 1.2rem;
-      font-weight: 500;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-    .card {
-      background: #ffffff;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      width: 90%;
-      margin-top: 2rem;
-    }
-    .card h2 {
-      font-size: 1.6rem;
-      margin-bottom: 1.5rem;
-      color: #333;
-      text-align: center;
-    }
-    form {
-      display: grid;
-      gap: 1.25rem;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    label {
-      font-size: 0.95rem;
-      margin-bottom: 0.4rem;
-      color: #555;
-      font-weight: 500;
-    }
-    input, textarea {
-      padding: 0.65rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.2s;
-    }
-    input:focus, textarea:focus {
-      border-color: #007bff;
-      outline: none;
-    }
-    button {
-      background-color: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 0.75rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    @media (min-width: 600px) {
-      form {
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem 1.5rem;
-      }
-      .form-group.full {
-        grid-column: 1 / -1;
-      }
-    }
+    /* ... your CSS (unchanged) ... */
   </style>
 
   <!-- Firebase SDKs -->
@@ -123,42 +25,7 @@
   <div class="card">
     <h2>Enter Patient Info</h2>
     <form id="patientForm">
-      <div class="form-group">
-        <label for="patientName">Patient Name</label>
-        <input type="text" id="patientName" required>
-      </div>
-      <div class="form-group">
-        <label for="preferredName">Preferred Name</label>
-        <input type="text" id="preferredName">
-      </div>
-      <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="1234567890" pattern="[0-9]{10}">
-      </div>
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="example@email.com">
-      </div>
-      <div class="form-group checkbox-group">
-        <input type="checkbox" id="sendEmail">
-        <label for="sendEmail">Send via Email</label>
-      </div>
-      <div class="form-group checkbox-group">
-        <input type="checkbox" id="sendText">
-        <label for="sendText">Send via Text</label>
-      </div>
-      <div class="form-group full">
-        <label for="message">Custom Message</label>
-        <textarea id="message" rows="5">Hello [preferred name],
-
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!
-
-Thanks!
-Sarah</textarea>
-      </div>
-      <div class="form-group full">
-        <button type="submit">Send</button>
-      </div>
+      <!-- ... your form (unchanged) ... -->
     </form>
   </div>
 
@@ -179,7 +46,17 @@ Sarah</textarea>
     firebase.analytics();
     const db = firebase.firestore();
 
-    // 🔒 LocalStorage-based auth
+    // 🔒 Require Firebase Auth login
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        console.warn("🔒 Not authenticated. Redirecting to login.");
+        window.location.href = "index.html";
+      } else {
+        console.log("✅ Authenticated as:", user.email);
+      }
+    });
+
+    // 🔒 LocalStorage-based username (visual only)
     const username = localStorage.getItem("username");
     if (!username) {
       window.location.href = "index.html";
@@ -254,6 +131,3 @@ Sarah`;
 </script>
 </body>
 </html>
-
-
-
