@@ -276,13 +276,13 @@ Sarah`;
 
         if (sendEmail && email && message) {
           const mailPayload = {
-            to: email,
-            message: {
-              subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-              text: message + linkLine
-              html: message.replace(/\n/g, "<br>") + `<br><br><a href="${reviewLink}">${reviewLink}</a>`
-            }
-          };
+  to: email,
+  message: {
+    subject: `We’d love your feedback, ${preferredName || "friend"}!`,
+    text: message + linkLine, // <- comma was missing here
+    html: message.replace(/\n/g, "<br>") + `<br><br><a href="${reviewLink}">${reviewLink}</a>`
+  }
+};
           console.log("📧 Sending email:", mailPayload);
           await db.collection("mail").add(mailPayload);
           alert("Email queued for delivery.");
