@@ -61,8 +61,10 @@
     </form>
   </div>
 
-  <!-- Login Script -->
+  <!-- Login Script (Firestore-based only) -->
   <script>
+    const db = firebase.firestore();
+
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -71,11 +73,25 @@
       const errorElem = document.getElementById("error");
       errorElem.style.display = "none";
 
-      const email = `${username}@ezreviews.com`;
-
       try {
-        await firebase.auth().signInWithEmailAndPassword(email, password);
+        const userDoc = await db.collection("users").doc(username).get();
+
+        if (!userDoc.exists) {
+          throw new Error("Username not found.");
+        }
+
+        const userData = userDoc.data();
+
+        if (userData.password !== password) {
+          throw new Error("Incorrect password.");
+        }
+
+        // Store session locally (optional)
+        localStorage.setItem("username", username);
+
+        // Redirect to dashboard
         window.location.href = "dashboard.html";
+
       } catch (error) {
         errorElem.innerText = error.message;
         errorElem.style.display = "block";
