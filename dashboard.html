@@ -280,6 +280,7 @@ Sarah`;
             message: {
               subject: `We’d love your feedback, ${preferredName || "friend"}!`,
               text: message + linkLine
+              html: message.replace(/\n/g, "<br>") + `<br><br><a href="${reviewLink}">${reviewLink}</a>`
             }
           };
           console.log("📧 Sending email:", mailPayload);
