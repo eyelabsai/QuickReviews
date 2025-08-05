@@ -227,9 +227,13 @@ Thank you so much for letting us take care of you. We hope you enjoyed your time
 
 Thanks!
 Sarah`;
+      if (messageBox.value === "" || messageBox.value.includes("[preferred name]") || messageBox.value.includes("Please visit this link")) {
+        messageBox.value = `Hello ${name},
 
-      if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
-        messageBox.value = defaultMessage;
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review: ${reviewLink}
+
+Thanks!
+Sarah`;
       } else {
         messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
       }
