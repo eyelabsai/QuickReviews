@@ -61,7 +61,7 @@
     </form>
   </div>
 
-  <!-- Username-Based Login Script -->
+  <!-- Login Script -->
   <script>
     const db = firebase.firestore();
 
@@ -74,17 +74,20 @@
       errorElem.style.display = "none";
 
       try {
-        const querySnapshot = await db.collection("users")
-          .where("username", "==", username)
-          .limit(1)
-          .get();
+        const userDocRef = db.collection("users").doc(username);
+        const userDoc = await userDocRef.get();
 
-        if (querySnapshot.empty) {
+        if (!userDoc.exists) {
           throw new Error("Username not found");
         }
 
-        const userDoc = querySnapshot.docs[0];
-        const email = userDoc.data().email;
+        const userData = userDoc.data();
+
+        if (userData.password !== password) {
+          throw new Error("Incorrect password");
+        }
+
+        const email = userData.email;
 
         await firebase.auth().signInWithEmailAndPassword(email, password);
         window.location.href = "dashboard.html";
