@@ -133,11 +133,11 @@
       </div>
       <div class="form-group">
         <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" placeholder="1234567890" pattern="[0-9]{10}" required>
+        <input type="tel" id="phone" placeholder="1234567890" pattern="[0-9]{10}">
       </div>
       <div class="form-group">
         <label for="email">Email Address</label>
-        <input type="email" id="email" placeholder="example@email.com" required>
+        <input type="email" id="email" placeholder="example@email.com">
       </div>
       <div class="form-group checkbox-group">
         <input type="checkbox" id="sendEmail">
@@ -217,22 +217,38 @@ Sarah</textarea>
         e.preventDefault();
 
         const phone = document.getElementById("phone").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const preferredName = document.getElementById("preferredName").value.trim();
         const sendText = document.getElementById("sendText").checked;
+        const sendEmail = document.getElementById("sendEmail").checked;
         const message = document.getElementById("message").value.trim();
 
-        if (sendText && phone && message) {
-          try {
+        try {
+          if (sendText && phone && message) {
             await db.collection("messages").add({
               to: "+1" + phone.replace(/\D/g, ""),
               body: message
             });
             alert("SMS message queued for delivery.");
-          } catch (err) {
-            console.error("Error sending SMS:", err);
-            alert("Failed to send SMS message.");
           }
-        } else {
-          alert("Please check \"Send via Text\" and enter a valid phone number and message.");
+
+          if (sendEmail && email && message) {
+            await db.collection("mail").add({
+              to: email,
+              message: {
+                subject: `We’d love your feedback, ${preferredName || "friend"}!`,
+                text: message
+              }
+            });
+            alert("Email queued for delivery.");
+          }
+
+          if (!(sendText || sendEmail)) {
+            alert("Please select at least one delivery method (Text or Email).");
+          }
+        } catch (err) {
+          console.error("Error sending message:", err);
+          alert("Failed to send one or more messages.");
         }
       });
     });
