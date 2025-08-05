@@ -275,12 +275,15 @@ Sarah`;
         }
 
         if (sendEmail && email && message) {
-          const mailPayload = {
+ const finalMessageText = message + `\n\nReview link: ${reviewLink}`;
+const finalMessageHtml = message.replace(/\n/g, "<br>") + `<br><br><a href="${reviewLink}">${reviewLink}</a>`;
+
+const mailPayload = {
   to: email,
   message: {
     subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-    text: message + linkLine, // <- comma was missing here
-    html: message.replace(/\n/g, "<br>") + `<br><br><a href="${reviewLink}">${reviewLink}</a>`
+    text: finalMessageText,
+    html: finalMessageHtml
   }
 };
           console.log("📧 Sending email:", mailPayload);
