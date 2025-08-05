@@ -190,8 +190,8 @@ Sarah</textarea>
       try {
         const snapshot = await db.collection("users").where("email", "==", user.email).limit(1).get();
         if (!snapshot.empty) {
-          const fullName = snapshot.docs[0].data().fullName;
-          document.getElementById("headerText").textContent = `Review for: ${fullName}`;
+          const fullname = snapshot.docs[0].data().fullname;
+          document.getElementById("headerText").textContent = `Review for: ${fullname}`;
         } else {
           document.getElementById("headerText").textContent = "Review for: [Unknown User]";
         }
