@@ -110,19 +110,16 @@
   <div class="logo-container">
     <img src="https://via.placeholder.com/200x60?text=Your+Logo" alt="Logo">
   </div>
-  <div class="header">
-    Review for: Matt Hirabayashi, MD
+  <div class="header" id="headerText">
+    Review for: [Loading...]
   </div>
+
   <div class="card">
     <h2>Enter Patient Info</h2>
     <form id="patientForm">
-      <div class="form-group">
-        <label for="firstName">First Name</label>
-        <input type="text" id="firstName" required>
-      </div>
-      <div class="form-group">
-        <label for="lastName">Last Name</label>
-        <input type="text" id="lastName" required>
+      <div class="form-group full">
+        <label for="patientName">Patient Name</label>
+        <input type="text" id="patientName" required>
       </div>
       <div class="form-group">
         <label for="preferredName">Preferred Name</label>
@@ -163,6 +160,8 @@ Sarah</textarea>
       </div>
     </form>
   </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
@@ -179,26 +178,32 @@ Sarah</textarea>
     };
     firebase.initializeApp(firebaseConfig);
     firebase.analytics();
-    firebase.auth().onAuthStateChanged(user => {
+
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged(async user => {
       if (!user) {
         window.location.href = "index.html";
+        return;
+      }
+
+      try {
+        const snapshot = await db.collection("users").where("email", "==", user.email).limit(1).get();
+        if (!snapshot.empty) {
+          const fullName = snapshot.docs[0].data().fullName;
+          document.getElementById("headerText").textContent = `Review for: ${fullName}`;
+        } else {
+          document.getElementById("headerText").textContent = "Review for: [Unknown User]";
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        document.getElementById("headerText").textContent = "Review for: [Error]";
       }
     });
 
-    // Auto-update preferred name in message
+    // Update preferred name in message
     const preferredNameInput = document.getElementById("preferredName");
     const messageBox = document.getElementById("message");
 
     preferredNameInput.addEventListener("input", () => {
-      const name = preferredNameInput.value || "[preferred name]";
-      const defaultMessage = `Hello [preferred name],\n\nThank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!\n\nThanks!\nSarah`;
-
-      if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
-        messageBox.value = defaultMessage.replace("[preferred name]", name);
-      } else {
-        messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
-      }
-    });
-  </script>
-</body>
-</html>
+      con
