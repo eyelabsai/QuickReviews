@@ -58,8 +58,8 @@
     if (sendText && phone && message) {
       try {
         await db.collection("messages").add({
-          to: `+1${phone}`,
-          body: message
+        to: "+1" + phone.replace(/\D/g, ""), // Example: +13145782374
+        body: message
         });
         alert("SMS message queued for delivery.");
       } catch (err) {
