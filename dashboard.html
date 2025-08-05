@@ -223,32 +223,37 @@ Sarah</textarea>
         const sendEmail = document.getElementById("sendEmail").checked;
         const message = document.getElementById("message").value.trim();
 
+        if (!(sendText || sendEmail)) {
+          alert("Please select at least one delivery method (Text or Email).");
+          return;
+        }
+
         try {
           if (sendText && phone && message) {
-            await db.collection("messages").add({
+            const smsPayload = {
               to: "+1" + phone.replace(/\D/g, ""),
               body: message
-            });
+            };
+            console.log("📱 Sending SMS:", smsPayload);
+            await db.collection("messages").add(smsPayload);
             alert("SMS message queued for delivery.");
           }
 
           if (sendEmail && email && message) {
-            await db.collection("mail").add({
+            const mailPayload = {
               to: email,
               message: {
                 subject: `We’d love your feedback, ${preferredName || "friend"}!`,
                 text: message
               }
-            });
+            };
+            console.log("📧 Sending email:", mailPayload);
+            await db.collection("mail").add(mailPayload);
             alert("Email queued for delivery.");
           }
-
-          if (!(sendText || sendEmail)) {
-            alert("Please select at least one delivery method (Text or Email).");
-          }
         } catch (err) {
-          console.error("Error sending message:", err);
-          alert("Failed to send one or more messages.");
+          console.error("❌ Error during submission:", err);
+          alert("❌ Failed to send one or more messages:\n" + err.message);
         }
       });
     });
