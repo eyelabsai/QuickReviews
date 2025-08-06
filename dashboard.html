@@ -167,79 +167,87 @@
   <!-- Main Script -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const firebaseConfig = {
-        apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
-        authDomain: "ezreview-ee8f0.firebaseapp.com",
-        projectId: "ezreview-ee8f0",
-        storageBucket: "ezreview-ee8f0.firebasestorage.app",
-        messagingSenderId: "985522835249",
-        appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
-        measurementId: "G-RBB28JDVJW"
-      };
+  const firebaseConfig = {
+    apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+    authDomain: "ezreview-ee8f0.firebaseapp.com",
+    projectId: "ezreview-ee8f0",
+    storageBucket: "ezreview-ee8f0.firebasestorage.app",
+    messagingSenderId: "985522835249",
+    appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+    measurementId: "G-RBB28JDVJW"
+  };
 
-      firebase.initializeApp(firebaseConfig);
-      firebase.analytics();
-      const db = firebase.firestore();
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+  const db = firebase.firestore();
 
-      let reviewLink = ""; // 🧩 Stored from Firestore
+  let reviewLink = "";
 
-      // 🔒 Require Firebase Auth login
-      firebase.auth().onAuthStateChanged((user) => {
-        if (!user) {
-          console.warn("🔒 Not authenticated. Redirecting to login.");
-          window.location.href = "index.html";
-        } else {
-          console.log("✅ Authenticated as:", user.email);
-        }
-      });
+  // 🔒 Get username first
+  const username = localStorage.getItem("username");
 
-      // 🔒 LocalStorage-based username (visual only)
-      const username = localStorage.getItem("username");
-      if (!username) {
-        window.location.href = "index.html";
-        return;
+  if (!username) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 🔗 Load review link early
+  db.collection("users").doc(username).get()
+    .then(doc => {
+      if (doc.exists && doc.data().reviewLink) {
+        reviewLink = doc.data().reviewLink;
+        console.log("✅ Review link loaded early:", reviewLink);
       } else {
-        document.getElementById("headerText").textContent = `Review for: ${username}`;
-
-        // 📥 Fetch reviewLink from Firestore
-        db.collection("users").doc(username).get().then(doc => {
-          if (doc.exists && doc.data().reviewLink) {
-            reviewLink = doc.data().reviewLink;
-          }
-        }).catch(err => {
-          console.error("⚠️ Failed to fetch reviewLink:", err);
-        });
+        console.warn("⚠️ No review link found for user.");
       }
+    })
+    .catch(err => {
+      console.error("❌ Error loading review link:", err);
+    });
 
-      const preferredNameInput = document.getElementById("preferredName");
-      const messageBox = document.getElementById("message");
+  // 🧾 Update header
+  document.getElementById("headerText").textContent = `Review for: ${username}`;
 
-     preferredNameInput.addEventListener("input", () => {
-  const name = preferredNameInput.value || "[preferred name]";
-  let defaultMessage = `Hello ${name},
+  // 🔒 Enforce login
+  firebase.auth().onAuthStateChanged((user) => {
+    if (!user) {
+      console.warn("🔒 Not authenticated. Redirecting to login.");
+      window.location.href = "index.html";
+    } else {
+      console.log("✅ Authenticated as:", user.email);
+    }
+  });
+
+  // Preferred name behavior
+  const preferredNameInput = document.getElementById("preferredName");
+  const messageBox = document.getElementById("message");
+
+  preferredNameInput.addEventListener("input", () => {
+    const name = preferredNameInput.value || "[preferred name]";
+    let defaultMessage = `Hello ${name},
 
 Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.`;
 
-  if (reviewLink) {
-    defaultMessage += `\n\nPlease leave us a review at the following link:\n${reviewLink}`;
-  }
+    if (reviewLink) {
+      defaultMessage += `\n\nPlease leave us a review at the following link:\n${reviewLink}`;
+    }
 
-  defaultMessage += `
+    defaultMessage += `
 
 Thanks!
 Sarah`;
 
-  if (
-    messageBox.value === "" ||
-    messageBox.value.includes("[preferred name]") ||
-    messageBox.value.includes("Hello ") ||
-    messageBox.value.includes("Please leave us a review")
-  ) {
-    messageBox.value = defaultMessage;
-  } else {
-    messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
-  }
-});
+    if (
+      messageBox.value === "" ||
+      messageBox.value.includes("[preferred name]") ||
+      messageBox.value.includes("Hello ") ||
+      messageBox.value.includes("Please leave us a review")
+    ) {
+      messageBox.value = defaultMessage;
+    } else {
+      messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
+    }
+  });
 
       document.getElementById("patientForm").addEventListener("submit", async function (e) {
         e.preventDefault();
