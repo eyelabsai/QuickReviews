@@ -214,21 +214,32 @@
       const preferredNameInput = document.getElementById("preferredName");
       const messageBox = document.getElementById("message");
 
-      preferredNameInput.addEventListener("input", () => {
-        const name = preferredNameInput.value || "[preferred name]";
-        const defaultMessage = `Hello ${name},
+     preferredNameInput.addEventListener("input", () => {
+  const name = preferredNameInput.value || "[preferred name]";
+  let defaultMessage = `Hello ${name},
 
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.`;
+
+  if (reviewLink) {
+    defaultMessage += `\n\nPlease leave us a review at the following link:\n${reviewLink}`;
+  }
+
+  defaultMessage += `
 
 Thanks!
 Sarah`;
 
-        if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
-          messageBox.value = defaultMessage;
-        } else {
-          messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
-        }
-      });
+  if (
+    messageBox.value === "" ||
+    messageBox.value.includes("[preferred name]") ||
+    messageBox.value.includes("Hello ") ||
+    messageBox.value.includes("Please leave us a review")
+  ) {
+    messageBox.value = defaultMessage;
+  } else {
+    messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
+  }
+});
 
       document.getElementById("patientForm").addEventListener("submit", async function (e) {
         e.preventDefault();
