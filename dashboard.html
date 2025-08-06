@@ -165,91 +165,128 @@
   </div>
 
   <!-- Main Script -->
- 
-  <script><script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const firebaseConfig = {
-      apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
-      authDomain: "ezreview-ee8f0.firebaseapp.com",
-      projectId: "ezreview-ee8f0",
-      storageBucket: "ezreview-ee8f0.firebasestorage.app",
-      messagingSenderId: "985522835249",
-      appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
-      measurementId: "G-RBB28JDVJW"
-    };
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+        authDomain: "ezreview-ee8f0.firebaseapp.com",
+        projectId: "ezreview-ee8f0",
+        storageBucket: "ezreview-ee8f0.firebasestorage.app",
+        messagingSenderId: "985522835249",
+        appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+        measurementId: "G-RBB28JDVJW"
+      };
 
-    firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
-    const db = firebase.firestore();
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+      const db = firebase.firestore();
 
-    let reviewLink = ""; // 🧩 Stored from Firestore
+      let reviewLink = ""; // 🧩 Stored from Firestore
 
-    // 🔒 Require Firebase Auth login
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        console.warn("🔒 Not authenticated. Redirecting to login.");
+      // 🔒 Require Firebase Auth login
+      firebase.auth().onAuthStateChanged((user) => {
+        if (!user) {
+          console.warn("🔒 Not authenticated. Redirecting to login.");
+          window.location.href = "index.html";
+        } else {
+          console.log("✅ Authenticated as:", user.email);
+        }
+      });
+
+      // 🔒 LocalStorage-based username (visual only)
+      const username = localStorage.getItem("username");
+      if (!username) {
         window.location.href = "index.html";
+        return;
       } else {
-        console.log("✅ Authenticated as:", user.email);
+        // After fetching document: if (doc.exists) {   const data = doc.data();   reviewLink = data.reviewLink || "";   const fullName = data.fullName || username;   document.getElementById("headerText").textContent = Review for: ${fullName}; }
+
+        // 📥 Fetch reviewLink from Firestore
+        
+
+        db.collection("users").doc(username).get().then(doc => {
+  if (doc.exists) {
+    const data = doc.data();
+    reviewLink = data.reviewLink || "";
+    const fullName = data.fullName || username;
+    document.getElementById("headerText").textContent = Review for: ${fullName};
+  } else {
+    console.warn("⚠️ No document found for user.");
+  }
+}).catch(err => {
+  console.error("⚠️ Failed to fetch user data:", err);
+});
       }
-    });
 
-    // 🔒 LocalStorage-based username (visual only)
-    const username = localStorage.getItem("username");
-    if (!username) {
-      window.location.href = "index.html";
-      return;
-    } else {
-      // 📥 Fetch reviewLink from Firestore
-      db.collection("users").doc(username).get().then(doc => {
-        if (doc.exists) {
-          const data = doc.data();
-          console.log("📄 Fetched Firestore data:", data);
+      const preferredNameInput = document.getElementById("preferredName");
+      const messageBox = document.getElementById("message");
 
-          reviewLink = data.reviewLink || "";
+      preferredNameInput.addEventListener("input", () => {
+        const name = preferredNameInput.value || "[preferred name]";
 
-          // ✅ Accept both 'fullName' or 'fullname' (case mismatch fallback)
-          const fullName = data.fullName || data.fullname || username;
+        const defaultMessage = Hello ${name},
 
-          if (!data.fullName && !data.fullname) {
-            console.warn("⚠️ No fullName or fullname field found in Firestore.");
-            alert("⚠️ Warning: No full name found in Firestore.");
-          }
-
-          document.getElementById("headerText").textContent = `Review for: ${fullName}`;
-
-          // ✅ Attach the input listener only after reviewLink is ready
-          const preferredNameInput = document.getElementById("preferredName");
-          const messageBox = document.getElementById("message");
-
-          preferredNameInput.addEventListener("input", () => {
-            const name = preferredNameInput.value || "[preferred name]";
-
-            const defaultMessage = `Hello ${name},
-
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.` +
-(reviewLink ? `\n\nPlease leave us a review at the following link:\n${reviewLink}` : "") +
-`
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. +
+  (reviewLink ? \n\nPlease leave us a review at the following link:\n${reviewLink} : "") +
+  
 
 Thanks!
-Sarah`;
+Sarah;
 
-            if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
-              messageBox.value = defaultMessage;
-            } else {
-              messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
-            }
-          });
-
+        if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
+          messageBox.value = defaultMessage;
         } else {
-          console.warn("⚠️ No document found for user.");
+          messageBox.value = messageBox.value.replace(/^Hello .*,/m, Hello ${name},);
         }
-      }).catch(err => {
-        console.error("⚠️ Failed to fetch user data:", err);
       });
-    }
-  });
-</script>
-</script>
+
+      document.getElementById("patientForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const phone = document.getElementById("phone").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const preferredName = document.getElementById("preferredName").value.trim();
+        const sendText = document.getElementById("sendText").checked;
+        const sendEmail = document.getElementById("sendEmail").checked;
+        let message = document.getElementById("message").value.trim();
+
+        if (!(sendText || sendEmail)) {
+          alert("Please select at least one delivery method (Text or Email).");
+          return;
+        }
+
+        // 🔗 Append review link if available
+        const linkLine = reviewLink ? \n\nReview link: ${reviewLink} : "";
+
+        try {
+          if (sendText && phone && message) {
+            const smsPayload = {
+              to: "+1" + phone.replace(/\D/g, ""),
+              body: message + linkLine
+            };
+            console.log("📱 Sending SMS:", smsPayload);
+            await db.collection("messages").add(smsPayload);
+            alert("SMS message queued for delivery.");
+          }
+
+          if (sendEmail && email && message) {
+            const mailPayload = {
+              to: email,
+              message: {
+                subject: We’d love your feedback, ${preferredName || "friend"}!,
+                text: message + (reviewLink ? \n\nReview link: <${reviewLink}> : "")
+              }
+            };
+            console.log("📧 Sending email:", mailPayload);
+            await db.collection("mail").add(mailPayload);
+            alert("Email queued for delivery.");
+          }
+        } catch (err) {
+          console.error("❌ Error during submission:", err);
+          alert("❌ Failed to send one or more messages:\n" + err.message);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
