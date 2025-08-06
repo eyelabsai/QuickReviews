@@ -199,7 +199,7 @@
         window.location.href = "index.html";
         return;
       } else {
-        document.getElementById("headerText").textContent = `Review for: ${username}`;
+        // After fetching document: if (doc.exists) {   const data = doc.data();   reviewLink = data.reviewLink || "";   const fullName = data.fullName || username;   document.getElementById("headerText").textContent = `Review for: ${fullName}`; }
 
         // 📥 Fetch reviewLink from Firestore
         db.collection("users").doc(username).get().then(doc => {
@@ -216,9 +216,12 @@
 
       preferredNameInput.addEventListener("input", () => {
         const name = preferredNameInput.value || "[preferred name]";
+
         const defaultMessage = `Hello ${name},
 
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.` +
+  (reviewLink ? `\n\nPlease leave us a review at the following link:\n${reviewLink}` : "") +
+  `
 
 Thanks!
 Sarah`;
