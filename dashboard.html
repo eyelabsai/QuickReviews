@@ -199,23 +199,16 @@
         window.location.href = "index.html";
         return;
       } else {
-        // After fetching document: if (doc.exists) {   const data = doc.data();   reviewLink = data.reviewLink || "";   const fullName = data.fullName || username;   document.getElementById("headerText").textContent = Review for: ${fullName}; }
+        document.getElementById("headerText").textContent = `Review for: ${username}`;
 
         // 📥 Fetch reviewLink from Firestore
-        
-
         db.collection("users").doc(username).get().then(doc => {
-  if (doc.exists) {
-    const data = doc.data();
-    reviewLink = data.reviewLink || "";
-    const fullName = data.fullName || username;
-    document.getElementById("headerText").textContent = Review for: ${fullName};
-  } else {
-    console.warn("⚠️ No document found for user.");
-  }
-}).catch(err => {
-  console.error("⚠️ Failed to fetch user data:", err);
-});
+          if (doc.exists && doc.data().reviewLink) {
+            reviewLink = doc.data().reviewLink;
+          }
+        }).catch(err => {
+          console.error("⚠️ Failed to fetch reviewLink:", err);
+        });
       }
 
       const preferredNameInput = document.getElementById("preferredName");
@@ -223,20 +216,17 @@
 
       preferredNameInput.addEventListener("input", () => {
         const name = preferredNameInput.value || "[preferred name]";
+        const defaultMessage = `Hello ${name},
 
-        const defaultMessage = Hello ${name},
-
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. +
-  (reviewLink ? \n\nPlease leave us a review at the following link:\n${reviewLink} : "") +
-  
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you. Please visit this link to leave a review!
 
 Thanks!
-Sarah;
+Sarah`;
 
         if (messageBox.value === "" || messageBox.value.includes("[preferred name]")) {
           messageBox.value = defaultMessage;
         } else {
-          messageBox.value = messageBox.value.replace(/^Hello .*,/m, Hello ${name},);
+          messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
         }
       });
 
@@ -256,7 +246,7 @@ Sarah;
         }
 
         // 🔗 Append review link if available
-        const linkLine = reviewLink ? \n\nReview link: ${reviewLink} : "";
+        const linkLine = reviewLink ? `\n\nReview link: ${reviewLink}` : "";
 
         try {
           if (sendText && phone && message) {
@@ -273,8 +263,8 @@ Sarah;
             const mailPayload = {
               to: email,
               message: {
-                subject: We’d love your feedback, ${preferredName || "friend"}!,
-                text: message + (reviewLink ? \n\nReview link: <${reviewLink}> : "")
+                subject: `We’d love your feedback, ${preferredName || "friend"}!`,
+                text: message + (reviewLink ? `\n\nReview link: <${reviewLink}>` : "")
               }
             };
             console.log("📧 Sending email:", mailPayload);
