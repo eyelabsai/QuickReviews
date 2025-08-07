@@ -118,6 +118,17 @@
   color: #007bff;
   text-decoration: underline;
 }
+    .footer-logo {
+  margin-top: 2rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.footer-logo img {
+  height: 40px;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
 </style>
 
   <!-- Firebase SDKs -->
@@ -361,5 +372,10 @@ db.collection("users").doc(username).get()
       });
     });
   </script>
+    <footer class="footer-logo">
+    <a href="https://biminiai.com" target="_blank" rel="noopener">
+      <img src="biminilogo.png" alt="Bimini Logo">
+    </a>
+  </footer>
 </body>
 </html>
