@@ -213,6 +213,31 @@
  const preferredNameInput = document.getElementById("preferredName");
 const messageBox = document.getElementById("message");
 
+const messagePreview = document.getElementById("messagePreview");
+
+// 📤 Live preview with link formatting
+function updateMessagePreview() {
+  let previewText = messageBox.value;
+
+  // Convert plain URL to a clickable link
+  if (reviewLink) {
+    const escapedLink = reviewLink.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const linkRegex = new RegExp(escapedLink, "g");
+    previewText = previewText.replace(linkRegex, `<a href="${reviewLink}" target="_blank">Click here to leave a review</a>`);
+  }
+
+  messagePreview.innerHTML = previewText.replace(/\n/g, "<br>");
+}
+
+// 🔁 Update preview whenever message box changes
+messageBox.addEventListener("input", updateMessagePreview);
+
+
+
+
+
+     
+
 // 🔁 Extract message generation into reusable function
 function updateMessageWithPreferredName() {
   const name = preferredNameInput.value || "[preferred name]";
