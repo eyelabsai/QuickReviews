@@ -336,9 +336,13 @@ db.collection("users").doc(username).get()
     to: email,
     message: {
       subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-html: message.replace(/(https?:\/\/[^\s]+)/g, function(url) {
-  return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
-})    }
+
+      html: message
+  .replace(/(https?:\/\/[^\s]+)/g, function(url) {
+    return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
+  })
+  .replace(/\n/g, "<br>")
+    }
   };
 
           
