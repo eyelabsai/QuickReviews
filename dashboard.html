@@ -216,25 +216,22 @@ const messageBox = document.getElementById("message");
 const messagePreview = document.getElementById("messagePreview");
 
 // 📤 Live preview with link formatting
-function updateMessagePreview() {
-  let previewText = messageBox.value;
 
-  // Convert plain URL to a clickable link
-  if (reviewLink) {
-    const escapedLink = reviewLink.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const linkRegex = new RegExp(escapedLink, "g");
-    previewText = previewText.replace(linkRegex, `<a href="${reviewLink}" target="_blank">Click here to leave a review</a>`);
-  }
-
-  messagePreview.innerHTML = previewText.replace(/\n/g, "<br>");
-}
 
 // 🔁 Update preview whenever message box changes
 messageBox.addEventListener("input", updateMessagePreview);
 
+function updateMessagePreview() {
+  let previewText = messageBox.value;
 
+  // Replace any URL with a clickable link
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  previewText = previewText.replace(urlRegex, function(url) {
+    return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
+  });
 
-
+  messagePreview.innerHTML = previewText.replace(/\n/g, "<br>");
+}
 
      
 
@@ -264,6 +261,9 @@ Sarah`;
   } else {
     messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
   }
+
+    updateMessagePreview();  // ✅ Fix: refresh preview after programmatic message update
+
 }
 
 preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
@@ -279,6 +279,7 @@ db.collection("users").doc(username).get()
 
       // ✅ Force message update regardless of preferred name field
       updateMessageWithPreferredName();
+      updateMessagePreview();  // 🟢 force preview to re-render after link is injected
 
     } else {
       console.warn("⚠️ No review link found for user.");
@@ -335,8 +336,9 @@ db.collection("users").doc(username).get()
     to: email,
     message: {
       subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-      html: message.replace(reviewLink, `<a href="${reviewLink}" target="_blank">Click here to leave a review</a>`)
-    }
+html: message.replace(/(https?:\/\/[^\s]+)/g, function(url) {
+  return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
+})    }
   };
 
           
