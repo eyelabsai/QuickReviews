@@ -364,13 +364,16 @@ db.collection("users").doc(username).get()
             
 const mailPayload = {
   to: email,
-  from: "feedback@ezreviews.app",  // ✅ must be a plain string
+  from: "feedback@ezreviews.app",  // ✅ valid string
   message: {
     subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-    html: ...
+    html: message
+      .replace(/(https?:\/\/[^\s]+)/g, function(url) {
+        return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
+      })
+      .replace(/\n/g, "<br>")
   }
 };
-
 
           
             console.log("📧 Sending email:", mailPayload);
