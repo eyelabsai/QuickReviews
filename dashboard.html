@@ -334,6 +334,10 @@ db.collection("users").doc(username).get()
           if (sendEmail && email && message) {
   const mailPayload = {
     to: email,
+    from: {
+    email: "feedback@ezreviews.app",
+    name: "Feedback"
+      },
     message: {
       subject: `We’d love your feedback, ${preferredName || "friend"}!`,
 
