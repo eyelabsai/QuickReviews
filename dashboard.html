@@ -227,18 +227,15 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
 
   // 🔗 Load review link early
- db.collection("users").doc(username).get()
+db.collection("users").doc(username).get()
   .then(doc => {
     if (doc.exists && doc.data().reviewLink) {
       reviewLink = doc.data().reviewLink;
       console.log("✅ Review link loaded early:", reviewLink);
 
-      // 🟢 Trigger message update again with current preferred name
-      const preferredNameField = document.getElementById("preferredName");
+      // ✅ Force message update regardless of preferred name field
+      updateMessageWithPreferredName();
 
-      if (preferredNameField.value) {
-  updateMessageWithPreferredName();
-}
     } else {
       console.warn("⚠️ No review link found for user.");
     }
