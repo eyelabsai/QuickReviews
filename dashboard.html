@@ -190,6 +190,41 @@
     window.location.href = "index.html";
     return;
   }
+ // Preferred name behavior
+ const preferredNameInput = document.getElementById("preferredName");
+const messageBox = document.getElementById("message");
+
+// 🔁 Extract message generation into reusable function
+function updateMessageWithPreferredName() {
+  const name = preferredNameInput.value || "[preferred name]";
+  let defaultMessage = `Hello ${name},
+
+Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.`;
+
+  if (reviewLink) {
+    defaultMessage += `\n\nPlease leave us a review at the following link:\n${reviewLink}`;
+  }
+
+  defaultMessage += `
+
+Thanks!
+Sarah`;
+
+  if (
+    messageBox.value === "" ||
+    messageBox.value.includes("[preferred name]") ||
+    messageBox.value.includes("Hello ") ||
+    messageBox.value.includes("Please leave us a review")
+  ) {
+    messageBox.value = defaultMessage;
+  } else {
+    messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
+  }
+}
+
+preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
+
+
 
   // 🔗 Load review link early
  db.collection("users").doc(username).get()
@@ -200,9 +235,10 @@
 
       // 🟢 Trigger message update again with current preferred name
       const preferredNameField = document.getElementById("preferredName");
+
       if (preferredNameField.value) {
-        preferredNameField.dispatchEvent(new Event('input'));
-      }
+  updateMessageWithPreferredName();
+}
     } else {
       console.warn("⚠️ No review link found for user.");
     }
@@ -223,37 +259,7 @@
       console.log("✅ Authenticated as:", user.email);
     }
   });
-
-  // Preferred name behavior
-  const preferredNameInput = document.getElementById("preferredName");
-  const messageBox = document.getElementById("message");
-
-  preferredNameInput.addEventListener("input", () => {
-    const name = preferredNameInput.value || "[preferred name]";
-    let defaultMessage = `Hello ${name},
-
-Thank you so much for letting us take care of you. We hope you enjoyed your time with us. Feedback is very valuable and we would love to hear from you.`;
-
-    if (reviewLink) {
-      defaultMessage += `\n\nPlease leave us a review at the following link:\n${reviewLink}`;
-    }
-
-    defaultMessage += `
-
-Thanks!
-Sarah`;
-
-    if (
-      messageBox.value === "" ||
-      messageBox.value.includes("[preferred name]") ||
-      messageBox.value.includes("Hello ") ||
-      messageBox.value.includes("Please leave us a review")
-    ) {
-      messageBox.value = defaultMessage;
-    } else {
-      messageBox.value = messageBox.value.replace(/^Hello .*,/m, `Hello ${name},`);
-    }
-  });
+     
       document.getElementById("patientForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
