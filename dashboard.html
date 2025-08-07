@@ -287,13 +287,15 @@ db.collection("users").doc(username).get()
           }
 
           if (sendEmail && email && message) {
-            const mailPayload = {
-              to: email,
-              message: {
-                subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-                text: message + (reviewLink ? `\n\nReview link: <${reviewLink}>` : "")
-              }
-            };
+  const mailPayload = {
+    to: email,
+    message: {
+      subject: `We’d love your feedback, ${preferredName || "friend"}!`,
+      html: message.replace(reviewLink, `<a href="${reviewLink}" target="_blank">Click here to leave a review</a>`)
+    }
+  };
+
+          
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
             alert("Email queued for delivery.");
