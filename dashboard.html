@@ -352,7 +352,7 @@ db.collection("users").doc(username).get()
           if (sendText && phone && message) {
             const smsPayload = {
               to: "+1" + phone.replace(/\D/g, ""),
-              body: message + linkLine
+              body: message
             };
             console.log("📱 Sending SMS:", smsPayload);
             await db.collection("messages").add(smsPayload);
