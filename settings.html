@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings | QuickReviews</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary-blue:#1e3a8a; --primary-blue-hover:#1e40af; --secondary-blue:#3b82f6; --light-blue:#dbeafe; --text-primary:#1f2937; --text-secondary:#6b7280; --card-bg:#fff; --border:#e5e7eb; --success:#10b981; --error:#ef4444; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#f8fafc;color:var(--text-primary);min-height:100vh}
+    .container{max-width:780px;margin:0 auto;padding:0 1rem}
+    .header{background:#fff;border-bottom:1px solid var(--border);padding:1rem 0;position:sticky;top:0;z-index:10}
+    .header-content{display:flex;justify-content:space-between;align-items:center}
+    .logo-section{display:flex;align-items:center;gap:1rem}
+    .logo-section img{height:40px;border-radius:8px}
+    .title{font-weight:600}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.65rem 1.1rem;border-radius:8px;font-weight:600;font-size:.875rem;border:1px solid var(--border);background:#f3f4f6;cursor:pointer}
+    .btn-primary{background:var(--primary-blue);border:none;color:#fff}
+    .btn-primary:hover{background:var(--primary-blue-hover)}
+    .btn-row{display:flex;gap:.5rem;align-items:center}
+    .card{background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin:1rem 0;overflow:hidden}
+    .card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);background:#fafafa}
+    .card-header h2{font-size:1.05rem}
+    .card-body{padding:1.25rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .grid.full{grid-template-columns:1fr}
+    .form-group{display:flex;flex-direction:column}
+    label{font-weight:500;margin-bottom:.35rem;font-size:.9rem}
+    input,textarea{padding:.75rem;border:1px solid var(--border);border-radius:8px;font-size:1rem;background:#fff}
+    textarea{min-height:140px;resize:vertical}
+    small{color:var(--text-secondary)}
+    .message{margin-top:.75rem;padding:.6rem .8rem;border-radius:8px;font-size:.9rem;text-align:center}
+    .message.error{background:#fef2f2;color:var(--error);border:1px solid #fecaca}
+    .message.success{background:#f0fdf4;color:var(--success);border:1px solid #bbf7d0}
+    .logo-preview{margin-top:.5rem}
+    .logo-preview img{max-height:80px;max-width:220px;border-radius:4px}
+    @media (max-width: 820px){.grid{grid-template-columns:1fr}}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo-section">
+          <img src="logo.png" alt="Logo">
+          <div class="title">Settings</div>
+        </div>
+        <div class="btn-row">
+          <button id="backBtn" class="btn">← Back to Dashboard</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header"><h2>General</h2></div>
+      <div class="card-body">
+        <div class="grid">
+          <div class="form-group">
+            <label for="senderName">Sender display name</label>
+            <input type="text" id="senderName" placeholder="e.g., Sarah at PNV">
+            <small>The name shown in your message signature.</small>
+          </div>
+          <div class="form-group">
+            <label for="emailSubject">Email subject</label>
+            <input type="text" id="emailSubject" placeholder="e.g., Thanks for coming to PNV">
+            <small>You can use {name} to personalize with the patient's preferred name.</small>
+          </div>
+        </div>
+        <div class="grid full">
+          <div class="form-group">
+            <label for="defaultMessage">Default message</label>
+            <textarea id="defaultMessage" placeholder="Your default message template. Use {name} for the patient's name. Include [Click here to leave a review] to show the link."></textarea>
+            <small>Example: Hi {name}! We hope you enjoyed your visit... Thanks! Sarah</small>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="form-group">
+            <label for="reviewLink">Public review link</label>
+            <input type="url" id="reviewLink" placeholder="https://g.page/r/your-review-link">
+          </div>
+          <div class="form-group">
+            <label for="practiceName">Clinic name</label>
+            <input type="text" id="practiceName" placeholder="Your clinic/practice name">
+          </div>
+        </div>
+        <div class="grid full">
+          <div class="form-group">
+            <label for="logoFile">Clinic logo</label>
+            <input type="file" id="logoFile" accept="image/png,image/jpeg">
+            <div id="logoPreview" class="logo-preview"></div>
+            <small>PNG/JPG up to 2MB. Shown in the dashboard.</small>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button id="saveGeneralBtn" class="btn btn-primary">Save Settings</button>
+          <div id="generalInfo" class="message success" style="display:none"></div>
+          <div id="generalErr" class="message error" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>Change Password</h2></div>
+      <div class="card-body">
+        <div class="grid full">
+          <div class="form-group">
+            <label for="currentPassword">Current password</label>
+            <input type="password" id="currentPassword" autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label for="newPassword">New password</label>
+            <input type="password" id="newPassword" autocomplete="new-password" placeholder="At least 8 characters">
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm new password</label>
+            <input type="password" id="confirmPassword" autocomplete="new-password">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button id="changePwBtn" class="btn btn-primary">Update Password</button>
+          <div id="pwInfo" class="message success" style="display:none"></div>
+          <div id="pwErr" class="message error" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+      authDomain: "ezreview-ee8f0.firebaseapp.com",
+      projectId: "ezreview-ee8f0",
+      storageBucket: "ezreview-ee8f0.firebasestorage.app",
+      messagingSenderId: "985522835249",
+      appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+      measurementId: "G-RBB28JDVJW"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    let userDocRef = null; let currentUser = null; let existingLogoUrl = null;
+
+    document.getElementById('backBtn').addEventListener('click', () => { window.location.href = 'dashboard.html'; });
+
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) { window.location.href = 'index.html'; return; }
+      currentUser = user;
+      const qs = await db.collection('users').where('email', '==', user.email).limit(1).get();
+      if (qs.empty) {
+        userDocRef = db.collection('users').doc(user.uid);
+        await userDocRef.set({ email: user.email }, { merge: true });
+      } else {
+        userDocRef = qs.docs[0].ref;
+        const data = qs.docs[0].data();
+        if (data.senderName) document.getElementById('senderName').value = data.senderName;
+        if (data.emailSubject) document.getElementById('emailSubject').value = data.emailSubject;
+        if (data.defaultMessage) document.getElementById('defaultMessage').value = data.defaultMessage;
+        if (data.reviewLink) document.getElementById('reviewLink').value = data.reviewLink;
+        if (data.practiceName) document.getElementById('practiceName').value = data.practiceName;
+        if (data.logoUrl) {
+          existingLogoUrl = data.logoUrl;
+          const p = document.getElementById('logoPreview');
+          p.innerHTML = `<img src="${data.logoUrl}" alt="logo">`;
+        }
+      }
+    });
+
+    document.getElementById('saveGeneralBtn').addEventListener('click', async () => {
+      const info = document.getElementById('generalInfo');
+      const err = document.getElementById('generalErr');
+      info.style.display = 'none'; err.style.display = 'none';
+      try {
+        const senderName = document.getElementById('senderName').value.trim();
+        const emailSubject = document.getElementById('emailSubject').value.trim();
+        const defaultMessage = document.getElementById('defaultMessage').value.trim();
+        const reviewLink = document.getElementById('reviewLink').value.trim();
+        const practiceName = document.getElementById('practiceName').value.trim();
+        const logoFile = document.getElementById('logoFile').files[0];
+
+        let logoUrl = existingLogoUrl || null;
+        if (logoFile) {
+          if (logoFile.size > 2 * 1024 * 1024) { throw new Error('Logo must be under 2 MB'); }
+          const ref = storage.ref().child(`logos/${currentUser.uid}/${logoFile.name}`);
+          await ref.put(logoFile, { contentType: logoFile.type, cacheControl: 'public,max-age=31536000' });
+          logoUrl = await ref.getDownloadURL();
+        }
+
+        const updates = {};
+        if (senderName) updates.senderName = senderName; else updates.senderName = firebase.firestore.FieldValue.delete();
+        if (emailSubject) updates.emailSubject = emailSubject; else updates.emailSubject = firebase.firestore.FieldValue.delete();
+        if (defaultMessage) updates.defaultMessage = defaultMessage; else updates.defaultMessage = firebase.firestore.FieldValue.delete();
+        if (reviewLink) updates.reviewLink = reviewLink; else updates.reviewLink = firebase.firestore.FieldValue.delete();
+        if (practiceName) updates.practiceName = practiceName; else updates.practiceName = firebase.firestore.FieldValue.delete();
+        if (logoUrl) updates.logoUrl = logoUrl; else updates.logoUrl = firebase.firestore.FieldValue.delete();
+
+        await userDocRef.set(updates, { merge: true });
+        info.textContent = 'Settings saved'; info.style.display = 'block';
+      } catch (e) {
+        err.textContent = e.message || 'Failed to save settings'; err.style.display = 'block';
+      }
+    });
+
+    document.getElementById('changePwBtn').addEventListener('click', async () => {
+      const pwInfo = document.getElementById('pwInfo'); const pwErr = document.getElementById('pwErr');
+      pwInfo.style.display = 'none'; pwErr.style.display = 'none';
+      try {
+        const currentPassword = document.getElementById('currentPassword').value.trim();
+        const newPassword = document.getElementById('newPassword').value.trim();
+        const confirmPassword = document.getElementById('confirmPassword').value.trim();
+        if (!newPassword || newPassword.length < 8) throw new Error('New password must be at least 8 characters');
+        if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
+        const user = firebase.auth().currentUser;
+        const cred = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+        await user.reauthenticateWithCredential(cred);
+        await user.updatePassword(newPassword);
+        try { localStorage.removeItem('showPwReminder'); } catch {}
+        const qs = await db.collection('users').where('email', '==', user.email).limit(1).get();
+        if (!qs.empty) { await qs.docs[0].ref.set({ needsPasswordChange: false }, { merge: true }); }
+        pwInfo.textContent = 'Password updated successfully'; pwInfo.style.display = 'block';
+      } catch (e) { pwErr.textContent = e.message || 'Failed to update password'; pwErr.style.display = 'block'; }
+    });
+  </script>
+</body>
+</html>
+

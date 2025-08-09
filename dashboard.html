@@ -424,7 +424,7 @@
           <div id="practiceName" class="practice-name"></div>
         </div>
         <div class="header-actions">
-          <button id="profileBtn" class="btn btn-secondary btn-sm">Profile</button>
+          <button id="settingsBtn" class="btn btn-secondary btn-sm">Settings</button>
           <button id="logoutBtn" class="btn btn-secondary btn-sm">Log out</button>
         </div>
       </div>
@@ -744,8 +744,9 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         reviewLink = data.reviewLink || "";
         console.log("✅ Review link loaded:", reviewLink);
 
+        const senderName = data.senderName || 'Your team';
         const fullName = data.fullName || data.fullname || user.email;
-        document.getElementById("headerText").textContent = `Review for: ${fullName}`;
+        document.getElementById("headerText").textContent = `Send a review request as ${senderName}`;
 
         // Practice name/logo if available
         if (data.logoUrl) {
@@ -762,6 +763,13 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           return;
         }
 
+        // Load default message/subject if provided
+        const defaultMessage = data.defaultMessage || null;
+        const emailSubject = data.emailSubject || null;
+        if (defaultMessage) {
+          const name = preferredNameInput.value.trim() || "[preferred name]";
+          messageBox.value = defaultMessage.replaceAll('{name}', name);
+        }
         // Refresh message and preview after profile data loads
         updateMessageWithPreferredName();
         updateMessagePreview();
@@ -785,8 +793,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
     try { await firebase.auth().signOut(); } catch {}
     window.location.href = 'index.html';
   });
-  document.getElementById('profileBtn').addEventListener('click', () => {
-    window.location.href = 'profile.html';
+  document.getElementById('settingsBtn').addEventListener('click', () => {
+    window.location.href = 'settings.html';
   });
      
   // --- Deliveries rendering ---
@@ -933,6 +941,10 @@ const mailPayload = {
 };
 
           
+            // Apply custom email subject if configured
+            if (emailSubject) {
+              mailPayload.message.subject = emailSubject.replaceAll('{name}', preferredName || 'friend');
+            }
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
             // Log delivery
