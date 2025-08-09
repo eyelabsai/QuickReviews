@@ -686,13 +686,6 @@ function updateMessagePreview() {
   // Now escape the HTML for the rest of the content
   previewText = escapeHtml(previewText);
 
-  // Replace the unique marker with the actual HTML link
-  if (reviewLink) {
-    const safeUrl = escapeHtml(reviewLink);
-    const linkHtml = '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>';
-    previewText = previewText.replace(/___REVIEW_LINK_PLACEHOLDER___/g, linkHtml);
-  }
-
   // Replace any other URLs with clickable links
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   previewText = previewText.replace(urlRegex, function(url) {
@@ -703,6 +696,13 @@ function updateMessagePreview() {
       return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">' + safeUrl + '</a>';
     }
   });
+
+  // Finally replace the unique marker with the actual HTML link
+  if (reviewLink) {
+    const safeUrl = escapeHtml(reviewLink);
+    const linkHtml = '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>';
+    previewText = previewText.replace(/___REVIEW_LINK_PLACEHOLDER___/g, linkHtml);
+  }
 
   messagePreview.innerHTML = previewText.replace(/\n/g, "<br>");
 }
@@ -768,6 +768,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         // Load default message/subject if provided
         const defaultMessage = data.defaultMessage || null;
         userEmailSubject = data.emailSubject || null;
+        const senderDisplay = data.senderDisplay || data.senderName || null;
         if (defaultMessage) {
           const name = preferredNameInput.value.trim() || "[preferred name]";
           messageBox.value = defaultMessage.replaceAll('{name}', name);
@@ -954,7 +955,12 @@ const safeHtml = htmlWithLinks
 
 const mailPayload = {
   to: email,
-  from: "feedback@ezreviews.app",
+  from: (function(){
+    try {
+      const friendly = (senderDisplay || senderName || 'Feedback');
+      return `${friendly} <feedback@ezreviews.app>`;
+    } catch { return "feedback@ezreviews.app"; }
+  })(),
   message: {
     subject: `We'd love your feedback, ${preferredName || "friend"}!`,
     html: safeHtml

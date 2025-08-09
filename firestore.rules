@@ -42,7 +42,10 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['to', 'from', 'message'])
         && request.resource.data.to is string
         && request.resource.data.from is string
-        && request.resource.data.from.matches('^feedback@ezreviews\\.app$')
+        && (
+          request.resource.data.from.matches('^feedback@ezreviews\\.app$') ||
+          request.resource.data.from.matches('^[^<>]{1,80} <feedback@ezreviews\\.app>$')
+        )
         && request.resource.data.message is map
         && request.resource.data.message.subject is string
         && request.resource.data.message.html is string;
