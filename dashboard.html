@@ -407,6 +407,17 @@
     color: var(--text-primary);
   }
   </style>
+  <style>
+  /* Toast notifications */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
+  .toast { min-width: 260px; max-width: 420px; padding: 12px 14px; border-radius: 10px; color: #0f172a; background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 10px 24px rgba(15,23,42,0.15); display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(8px); animation: toast-in 160ms ease forwards; }
+  .toast.success { border-color: #bbf7d0; background: #f0fdf4; color: #14532d; }
+  .toast.error { border-color: #fecaca; background: #fef2f2; color: #7f1d1d; }
+  .toast.info { border-color: #dbeafe; background: #eff6ff; color: #1e3a8a; }
+  .toast .toast-title { font-weight: 600; margin-right: 6px; }
+  @keyframes toast-in { to { opacity: 1; transform: translateY(0); } }
+  @keyframes toast-out { to { opacity: 0; transform: translateY(8px); } }
+  </style>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
@@ -554,6 +565,9 @@
     </a>
   </footer>
 
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
   <!-- Main Script -->
   <script>
    document.addEventListener("DOMContentLoaded", function () {
@@ -570,6 +584,21 @@
   firebase.initializeApp(firebaseConfig);
   firebase.analytics();
   const db = firebase.firestore();
+  // Toast helper
+  function showToast(message, variant = 'success', title = '') {
+    try {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${variant}`;
+      toast.innerHTML = `${title ? `<span class=\"toast-title\">${title}</span>` : ''}<span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      const lifetimeMs = Math.max(2000, Math.min(6000, message.length * 60));
+      setTimeout(() => {
+        toast.style.animation = 'toast-out 180ms ease forwards';
+        setTimeout(() => container.removeChild(toast), 200);
+      }, lifetimeMs);
+    } catch (e) { /* no-op */ }
+  }
   
 
   let reviewLink = "";
@@ -866,7 +895,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         let message = document.getElementById("message").value.trim();
 
         if (!(sendText || sendEmail)) {
-          alert("Please select at least one delivery method (Text or Email).");
+          showToast("Please select at least one delivery method (Text or Email).", 'info');
           return;
         }
 
@@ -912,7 +941,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             } catch (e) { console.warn('Failed to log SMS delivery', e); }
-            alert("SMS message queued for delivery.");
+            showToast("Text message queued for delivery.", 'success', 'Sent');
           }
 
           if (sendEmail && email && message) {
@@ -986,11 +1015,11 @@ const mailPayload = {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             } catch (e) { console.warn('Failed to log email delivery', e); }
-            alert("Email queued for delivery.");
+            showToast("Email queued for delivery.", 'success', 'Sent');
           }
         } catch (err) {
           console.error("❌ Error during submission:", err);
-          alert("❌ Failed to send one or more messages:\n" + err.message);
+          showToast("Failed to send one or more messages: " + (err.message || ''), 'error', 'Error');
         }
       });
     });
