@@ -714,6 +714,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
   let currentUser = null;
   let unsubscribeDeliveries = null;
   let lastDeliveries = [];
+  // Settings pulled from profile
+  let userEmailSubject = null;
 
   firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
@@ -765,7 +767,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         // Load default message/subject if provided
         const defaultMessage = data.defaultMessage || null;
-        const emailSubject = data.emailSubject || null;
+        userEmailSubject = data.emailSubject || null;
         if (defaultMessage) {
           const name = preferredNameInput.value.trim() || "[preferred name]";
           messageBox.value = defaultMessage.replaceAll('{name}', name);
@@ -915,23 +917,22 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           if (sendEmail && email && message) {
 
             
-const safeHtml = escapeHtml(messageForSending)
+let htmlWithLinks = escapeHtml(messageForSending)
+  .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
+    const safeUrl = escapeHtml(url);
+    // If this URL is already part of an href attribute, skip
+    const before = full.slice(Math.max(0, offset - 10), offset);
+    if (before.includes('href="') || before.includes("href='")) return url;
+    if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+    }
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
+  });
+
+const safeHtml = htmlWithLinks
   .replace(/\[Click here to leave a review\]/g, function() {
     const safeUrl = escapeHtml(fiveStarReviewLink);
     return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-  })
-  .replace(/(https?:\/\/[^\s]+)/g, function(url) {
-    const safeUrl = escapeHtml(url);
-    // Skip URLs that are already inside anchor tags to prevent double-linking
-    if (safeHtml.includes(`href="${safeUrl}"`)) {
-      return url;
-    }
-    // Check if it's a Google review link and make it more user-friendly
-    if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
-      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-    } else {
-      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
-    }
   })
   .replace(/\n/g, "<br>");
 
@@ -946,8 +947,8 @@ const mailPayload = {
 
           
             // Apply custom email subject if configured
-            if (emailSubject) {
-              mailPayload.message.subject = emailSubject.replaceAll('{name}', preferredName || 'friend');
+            if (userEmailSubject) {
+              mailPayload.message.subject = userEmailSubject.replaceAll('{name}', preferredName || 'friend');
             }
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
