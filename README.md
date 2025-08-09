@@ -33,53 +33,48 @@ A modern, professional patient feedback tool that helps healthcare practices col
    firebase deploy
    ```
 
-## 👤 Creating New Accounts
+## 👤 Creating New Accounts (Internal)
 
-### Method 1: Using the Web Interface (Recommended)
+Use the Node invite script to create accounts quickly, optionally assign a username, and enqueue a welcome email with a password reset link.
 
-1. **Navigate to the login page**
-   - Go to your deployed app URL (e.g., `https://your-project.firebaseapp.com`)
+### Prerequisites
+- `serviceAccountKey.json` at the project root (Firebase Console → Project settings → Service accounts → Generate new private key)
+- Dependencies installed:
+  ```bash
+  npm install
+  ```
 
-2. **First-time user setup**
-   - Enter your email and password
-   - If no account exists, you'll be redirected to the profile setup page
-   - Fill in your practice information:
-     - **Full Name**: Your name or practice name
-     - **Practice Name**: Your clinic/practice name
-     - **Review Link**: Your Google Reviews or other review platform link
-     - **Logo URL** (optional): URL to your practice logo
-   - Click "Save Profile"
+### Create a user (recommended)
+```bash
+npm run create:user -- \
+  --email 'user@example.com' \
+  --password 'TempPass123!' \
+  --fullName 'First Last' \
+  --reviewLink 'https://g.page/r/your-link' \
+  --username 'yourusername'
+```
 
-3. **Start using the app**
-   - You'll be redirected to the dashboard
-   - Begin sending review requests to patients
+Notes:
+- `--username` is optional; if provided, it will be claimed if available and stored in the user profile.
+- A password reset link will be generated and a welcome email enqueued (from `feedback@ezreviews.app`). Disable sending with `--no-sendEmail`.
+- If your shell expands `!`, use single quotes around the password (as above).
 
-### Method 2: Using Python Script (For Bulk Creation)
+Examples:
+```bash
+# Create Test Two with username and welcome email
+npm run create:user -- --email 'test2@gmail.com' --password 'TempPass123!' --fullName 'Test Two' --reviewLink 'https://g.page/r/your-link' --username 'test2'
 
-1. **Set up Python environment**
-   ```bash
-   cd scripts
-   pip install -r requirements.txt
-   ```
+# Create without sending email
+npm run create:user -- --email 'user@example.com' --password 'TempPass123!' --fullName 'User Name' --reviewLink 'https://g.page/r/your-link' --no-sendEmail
+```
 
-2. **Create users via script**
-   ```bash
-   python create_user.py
-   ```
-   
-   The script will prompt for:
-   - Email address
-   - Password
-   - Full name
-   - Practice name
-   - Review link
-
-### Method 3: Using Node.js Script
-
-1. **Run the Node.js user creation script**
-   ```bash
-   node scripts/createUser.mjs
-   ```
+### Alternative: Python script
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r scripts/requirements.txt
+python3 scripts/create_user.py --email 'user@example.com' --temp-password 'TempPass123!' --full-name 'User Name' --review-link 'https://g.page/r/your-link'
+```
+The Python script prints a password reset link you can send manually.
 
 ## 🔧 Configuration
 

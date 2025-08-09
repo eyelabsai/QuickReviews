@@ -82,8 +82,8 @@
     <p class="muted-text" style="text-align:center; margin-bottom:1.25rem;">Sign in to continue</p>
     <form id="loginForm">
       <div class="form-group full">
-        <label for="email">Email</label>
-        <input type="email" id="email" placeholder="you@clinic.com" required>
+        <label for="identifier">Email or Username</label>
+        <input type="text" id="identifier" placeholder="you@clinic.com or username" autocomplete="username" required>
       </div>
 
       <div class="form-group full">
@@ -103,7 +103,13 @@
           <span>Sign in</span>
           <span class="icon">→</span>
         </button>
-        <button type="button" id="forgotBtn" class="btn btn-link">Forgot password?</button>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.25rem;">
+          <button type="button" id="forgotBtn" class="btn btn-link" style="padding:0;">Forgot password?</button>
+          <div style="display:flex; gap:.75rem;">
+            <button type="button" id="forgotUsernameBtn" class="btn btn-link" style="padding:0;">Forgot username?</button>
+            <button type="button" id="forgotEmailBtn" class="btn btn-link" style="padding:0;">Forgot email?</button>
+          </div>
+        </div>
       </div>
 
       <p id="error" class="error-text" style="display:none; text-align:center; margin-top:.25rem;"></p>
@@ -118,7 +124,7 @@
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const email = document.getElementById("email").value.trim();
+      const identifier = document.getElementById("identifier").value.trim();
       const password = document.getElementById("password").value.trim();
       const keepLoggedIn = document.getElementById("keepLoggedIn").checked;
       const errorElem = document.getElementById("error");
@@ -129,11 +135,21 @@
         const persistence = keepLoggedIn ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
         await firebase.auth().setPersistence(persistence);
 
-        // ✅ Sign in directly with Firebase Auth
-        await firebase.auth().signInWithEmailAndPassword(email, password);
+        // Resolve identifier → email if needed, then sign in
+        let resolvedEmail = identifier;
+        if (!identifier.includes('@')) {
+          const uname = identifier.toLowerCase();
+          const doc = await db.collection('usernames').doc(uname).get();
+          if (!doc.exists) { throw new Error('Username not found'); }
+          const m = doc.data();
+          if (!m || !m.email) { throw new Error('Username mapping invalid'); }
+          resolvedEmail = m.email;
+        }
+
+        await firebase.auth().signInWithEmailAndPassword(resolvedEmail, password);
 
         // 🔎 Check profile to determine next step
-        const qs = await db.collection('users').where('email', '==', email).limit(1).get();
+        const qs = await db.collection('users').where('email', '==', resolvedEmail).limit(1).get();
         if (!qs.empty) {
           const data = qs.docs[0].data();
           if (data.needsPasswordChange === true) {
@@ -156,22 +172,86 @@
 
     // Forgot password
     document.getElementById('forgotBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
+      const identifier = document.getElementById('identifier').value.trim();
       const info = document.getElementById('info');
       const err = document.getElementById('error');
       info.style.display = 'none';
       err.style.display = 'none';
-      if (!email) {
-        err.textContent = 'Enter your email above first.';
+      if (!identifier) {
+        err.textContent = 'Enter your email or username above first.';
         err.style.display = 'block';
         return;
       }
       try {
-        await firebase.auth().sendPasswordResetEmail(email);
+        let emailToReset = identifier;
+        if (!identifier.includes('@')) {
+          const uname = identifier.toLowerCase();
+          const doc = await db.collection('usernames').doc(uname).get();
+          if (!doc.exists) { throw new Error('Username not found'); }
+          const m = doc.data();
+          if (!m || !m.email) { throw new Error('Username mapping invalid'); }
+          emailToReset = m.email;
+        }
+        await firebase.auth().sendPasswordResetEmail(emailToReset);
         info.textContent = 'Password reset email sent.';
         info.style.display = 'block';
       } catch (e) {
         err.textContent = e.message;
+        err.style.display = 'block';
+      }
+    });
+
+    // Forgot username (enter your email → we show your username)
+    document.getElementById('forgotUsernameBtn').addEventListener('click', async () => {
+      const identifier = document.getElementById('identifier').value.trim();
+      const info = document.getElementById('info');
+      const err = document.getElementById('error');
+      info.style.display = 'none'; err.style.display = 'none';
+      if (!identifier || !identifier.includes('@')) {
+        err.textContent = 'Enter your account email above first.';
+        err.style.display = 'block';
+        return;
+      }
+      try {
+        const qs = await db.collection('usernames').where('email', '==', identifier).limit(1).get();
+        if (qs.empty) { throw new Error('No username found for that email'); }
+        const username = qs.docs[0].id;
+        info.textContent = `Your username: ${username}`;
+        info.style.display = 'block';
+      } catch (e) {
+        err.textContent = e.message || 'Unable to look up username';
+        err.style.display = 'block';
+      }
+    });
+
+    // Forgot email (enter your username → we show a masked email)
+    document.getElementById('forgotEmailBtn').addEventListener('click', async () => {
+      const identifier = document.getElementById('identifier').value.trim();
+      const info = document.getElementById('info');
+      const err = document.getElementById('error');
+      info.style.display = 'none'; err.style.display = 'none';
+      if (!identifier || identifier.includes('@')) {
+        err.textContent = 'Enter your username above first.';
+        err.style.display = 'block';
+        return;
+      }
+      try {
+        const uname = identifier.toLowerCase();
+        const doc = await db.collection('usernames').doc(uname).get();
+        if (!doc.exists) { throw new Error('Username not found'); }
+        const m = doc.data();
+        if (!m || !m.email) { throw new Error('Username mapping invalid'); }
+        const email = m.email;
+        const masked = (function maskEmail(e){
+          const [local, domain] = e.split('@');
+          const mask = (s) => s.length <= 2 ? s[0] + '*' : s[0] + '*'.repeat(Math.max(1, s.length-2)) + s[s.length-1];
+          const [domRoot, ...domRest] = domain.split('.');
+          return `${mask(local)}@${mask(domRoot)}.${domRest.join('.')}`;
+        })(email);
+        info.textContent = `Account email looks like: ${masked}`;
+        info.style.display = 'block';
+      } catch (e) {
+        err.textContent = e.message || 'Unable to look up email';
         err.style.display = 'block';
       }
     });

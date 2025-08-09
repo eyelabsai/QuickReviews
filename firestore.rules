@@ -12,16 +12,31 @@ service cloud.firestore {
       // Allow owner to create their profile doc at their UID with limited fields
       allow create: if isSignedIn()
         && userId == request.auth.uid
-        && request.resource.data.keys().hasOnly(['email', 'fullName', 'reviewLink', 'needsPasswordChange', 'practiceName', 'logoUrl', 'senderName', 'emailSubject', 'defaultMessage', 'username'])
+        && request.resource.data.keys().hasOnly(['email', 'fullName', 'reviewLink', 'needsPasswordChange', 'practiceName', 'logoUrl', 'senderName', 'emailSubject', 'defaultMessage', 'username', 'usernameLower'])
         && request.resource.data.email == request.auth.token.email;
 
       // Allow owner to update limited fields; email must stay the same
       allow update: if isSignedIn()
         && resource.data.email == request.auth.token.email
-        && request.resource.data.keys().hasOnly(['email', 'fullName', 'reviewLink', 'needsPasswordChange', 'practiceName', 'logoUrl', 'senderName', 'emailSubject', 'defaultMessage', 'username'])
+        && request.resource.data.keys().hasOnly(['email', 'fullName', 'reviewLink', 'needsPasswordChange', 'practiceName', 'logoUrl', 'senderName', 'emailSubject', 'defaultMessage', 'username', 'usernameLower'])
         && request.resource.data.email == resource.data.email;
 
       allow delete: if false;
+    }
+
+    // Public username → uid/email mapping for sign-in by username
+    // Doc ID is the lowercase username; fields contain only uid/email/createdAt
+    match /usernames/{uname} {
+      // Public read so login form can resolve username → email without auth
+      allow read: if true;
+
+      // Only the signed-in owner can claim a username, once. No updates/deletes.
+      allow create: if isSignedIn()
+        && request.resource.id.matches('^[a-z0-9._-]{3,30}$')
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if false;
     }
 
     // Outbound SMS queue: allow authenticated creates with basic validation

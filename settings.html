@@ -204,8 +204,6 @@
         if (reviewLink) updates.reviewLink = reviewLink; else updates.reviewLink = firebase.firestore.FieldValue.delete();
         if (practiceName) updates.practiceName = practiceName; else updates.practiceName = firebase.firestore.FieldValue.delete();
         if (logoUrl) updates.logoUrl = logoUrl; else updates.logoUrl = firebase.firestore.FieldValue.delete();
-        // Remove legacy username field if present
-        updates.username = firebase.firestore.FieldValue.delete();
 
         await userDocRef.set(updates, { merge: true });
         info.textContent = 'Settings saved'; info.style.display = 'block';
