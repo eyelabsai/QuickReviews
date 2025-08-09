@@ -91,6 +91,13 @@
         <input type="password" id="password" placeholder="••••••••" required>
       </div>
 
+      <div class="form-group full">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+          <input type="checkbox" id="keepLoggedIn" checked>
+          <span>Keep me logged in</span>
+        </label>
+      </div>
+
       <div class="form-group full" style="display:flex; gap:.75rem; align-items:center; justify-content:space-between;">
         <button type="submit" class="btn btn-primary btn-pill btn-elevated btn-with-icon" style="flex:1.2;">
           <span>Sign in</span>
@@ -113,10 +120,15 @@
 
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
+      const keepLoggedIn = document.getElementById("keepLoggedIn").checked;
       const errorElem = document.getElementById("error");
       errorElem.style.display = "none";
 
       try {
+        // Set Firebase Auth persistence based on checkbox
+        const persistence = keepLoggedIn ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION;
+        await firebase.auth().setPersistence(persistence);
+
         // ✅ Sign in directly with Firebase Auth
         await firebase.auth().signInWithEmailAndPassword(email, password);
 
