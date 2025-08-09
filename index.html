@@ -177,9 +177,29 @@
     });
 
     // Conditionally show logout if already signed in
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
       const btn = document.getElementById('logoutBtn');
       btn.style.display = user ? 'inline-flex' : 'none';
+      
+      // If user is already authenticated, redirect to appropriate page
+      if (user) {
+        try {
+          const qs = await db.collection('users').where('email', '==', user.email).limit(1).get();
+          if (!qs.empty) {
+            const data = qs.docs[0].data();
+            if (!(data.fullName && data.reviewLink)) {
+              window.location.href = 'profile.html';
+              return;
+            }
+            window.location.href = 'dashboard.html';
+            return;
+          }
+          // No profile doc yet → go set it up
+          window.location.href = 'profile.html';
+        } catch (error) {
+          console.error('Error checking user profile:', error);
+        }
+      }
     });
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       try { await firebase.auth().signOut(); } catch {}
