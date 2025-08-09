@@ -807,7 +807,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
             // Log delivery
             try {
               await db.collection('deliveries').add({
-                ownerEmail: user.email,
+                ownerEmail: currentUser.email,
                 patientFullName: document.getElementById('fullName').value.trim(),
                 patientPreferredName: preferredName || '',
                 to: smsPayload.to,
@@ -844,7 +844,7 @@ const mailPayload = {
             // Log delivery
             try {
               await db.collection('deliveries').add({
-                ownerEmail: user.email,
+                ownerEmail: currentUser.email,
                 patientFullName: document.getElementById('fullName').value.trim(),
                 patientPreferredName: preferredName || '',
                 to: email,
