@@ -35,83 +35,33 @@ const argv = yargs(hideBin(process.argv))
   .option('username', { type: 'string', describe: 'Optional username to assign (lowercased, a-z0-9._-)' })
   .option('senderName', { type: 'string', default: 'QuickReviews', describe: 'Friendly From name for welcome email' })
   .option('sendEmail', { type: 'boolean', default: true, describe: 'Send welcome email with reset link' })
+  .option('reset', { type: 'boolean', default: false, describe: 'If the user exists, reset password (otherwise do nothing)' })
   .strict()
   .argv;
 
 async function main() {
-  const { email, password, fullName, reviewLink, username, senderName, sendEmail } = argv;
+  const { email, password, fullName, reviewLink, username, senderName, sendEmail, reset } = argv;
 
-  // Create Auth user (idempotent on email)
+  // Create Auth user (idempotent on exact email only)
   let userRecord;
-  // Duplicate/typo guards
-  function normalizeEmailForDupCheck(e) {
-    const [localRaw, domainRaw] = String(e).toLowerCase().split('@');
-    const domain = (domainRaw || '').trim();
-    const local = (localRaw || '').trim();
-    if (domain === 'gmail.com' || domain === 'googlemail.com') {
-      const plus = local.indexOf('+');
-      const base = plus >= 0 ? local.slice(0, plus) : local;
-      return `${base.replace(/\./g, '')}@gmail.com`;
-    }
-    return `${local}@${domain}`;
-  }
-  function levenshtein(a, b) {
-    const m = a.length, n = b.length;
-    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-        dp[i][j] = Math.min(
-          dp[i - 1][j] + 1,
-          dp[i][j - 1] + 1,
-          dp[i - 1][j - 1] + cost
-        );
-      }
-    }
-    return dp[m][n];
-  }
-  async function findSimilarUsers(targetEmail) {
-    const normalizedTarget = normalizeEmailForDupCheck(targetEmail);
-    let nextPageToken = undefined;
-    let similar = [];
-    while (true) {
-      const page = await admin.auth().listUsers(1000, nextPageToken);
-      for (const u of page.users) {
-        const e = (u.email || '').toLowerCase();
-        if (!e) continue;
-        if (e === targetEmail.toLowerCase()) {
-          return { exact: u, similar };
-        }
-        const n = normalizeEmailForDupCheck(e);
-        if (n === normalizedTarget) {
-          similar.push({ uid: u.uid, email: e, reason: 'same-normalized' });
-        } else {
-          const d = levenshtein(e, targetEmail.toLowerCase());
-          if (d === 1) similar.push({ uid: u.uid, email: e, reason: 'edit-distance-1' });
-        }
-      }
-      if (!page.pageToken) break;
-      nextPageToken = page.pageToken;
-    }
-    return { exact: null, similar };
-  }
-
-  const dupCheck = await findSimilarUsers(email);
-  if (dupCheck.exact) {
-    userRecord = dupCheck.exact;
+  try {
+    userRecord = await admin.auth().getUserByEmail(email);
     console.log(`User exists: ${userRecord.uid}`);
-    // Ensure password is current
+    if (!reset) {
+      console.log('No changes made. Use --reset to update password.');
+      return;
+    }
     await admin.auth().updateUser(userRecord.uid, { password, emailVerified: true });
-  } else if (dupCheck.similar.length && !argv.force) {
-    console.error('Potential duplicate/typo detected:');
-    dupCheck.similar.slice(0, 5).forEach(s => console.error(`- ${s.email} (${s.reason})`));
-    console.error('If this is intentional, re-run with --force');
-    process.exit(1);
-  } else {
-    userRecord = await admin.auth().createUser({ email, password, emailVerified: true });
-    console.log(`Created user: ${userRecord.uid}`);
+    console.log('Password reset completed.');
+    // Do not alter profile, usernames, or send emails on reset-only flow
+    return;
+  } catch (err) {
+    if (err.code === 'auth/user-not-found') {
+      userRecord = await admin.auth().createUser({ email, password, emailVerified: true });
+      console.log(`Created user: ${userRecord.uid}`);
+    } else {
+      throw err;
+    }
   }
 
   // Write Firestore profile (doc can be ID = uid or existing email doc)
