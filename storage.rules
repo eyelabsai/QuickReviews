@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() { return request.auth != null; }
+
+    // Logos are stored under logos/{uid}/...
+    match /logos/{uid}/{fileName} {
+      allow read: if true; // public logos OK
+      allow write: if isSignedIn() && uid == request.auth.uid
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Deny other paths by default
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+

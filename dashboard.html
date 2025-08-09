@@ -2,139 +2,411 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Patient Info Entry</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <title>QuickReviews Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
   * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
   }
+  
+  :root {
+    --primary-blue: #1e3a8a;
+    --primary-blue-hover: #1e40af;
+    --secondary-blue: #3b82f6;
+    --light-blue: #dbeafe;
+    --dark-blue: #1e293b;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --background: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+  
   body {
     font-family: 'Inter', sans-serif;
-    background: #eef2f7;
+    background: var(--background);
     min-height: 100vh;
+    color: var(--text-primary);
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  /* Header */
+  .header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header-content {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
   }
-  .logo-container {
-    padding: 1rem;
-    text-align: center;
+  
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
-  .logo-container img {
-    height: 60px;
-    max-width: 100%;
+  
+  .logo-section img {
+    height: 40px;
+    border-radius: 8px;
   }
-  .header {
-    width: 100%;
-    background-color: #007bff;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    text-align: center;
-    font-size: 1.2rem;
+  
+  .practice-name {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+  
+  /* Navigation Tabs */
+  .nav-tabs {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  
+  .nav-tabs .container {
+    display: flex;
+    gap: 0;
+  }
+  
+  .nav-tab {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
     font-weight: 500;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
   }
+  
+  .nav-tab.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+    background: var(--light-blue);
+  }
+  
+  .nav-tab:hover:not(.active) {
+    color: var(--text-primary);
+    background: #f9fafb;
+  }
+  
+  /* Tab Content */
+  .tab-content {
+    display: none;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+  
+  /* Cards */
   .card {
-    background: #ffffff;
-    padding: 2rem;
+    background: var(--card-bg);
     border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    width: 90%;
-    margin-top: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border);
+    overflow: hidden;
   }
-  .card h2 {
-    font-size: 1.6rem;
-    margin-bottom: 1.5rem;
-    color: #333;
-    text-align: center;
+  
+  .card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: #fafafa;
   }
-  form {
+  
+  .card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+  }
+  
+  /* Form Styles */
+  .form-grid {
     display: grid;
-    gap: 1.25rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
+  
   .form-group {
     display: flex;
     flex-direction: column;
   }
+  
+  .form-group.full {
+    grid-column: 1 / -1;
+  }
+  
+  label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+  }
+  
+  input, textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: #fff;
+  }
+  
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--secondary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+  
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  
+  .btn-primary {
+    background: var(--primary-blue);
+    color: white;
+  }
+  
+  .btn-primary:hover {
+    background: var(--primary-blue-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+  }
+  
+  .btn-secondary {
+    background: #f3f4f6;
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+  }
+  
+  .btn-secondary:hover {
+    background: #e5e7eb;
+  }
+  
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  /* Checkbox Group */
   .checkbox-group {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin: 1rem 0;
   }
-  label {
-    font-size: 0.95rem;
-    margin-bottom: 0.4rem;
-    color: #555;
-    font-weight: 500;
+  
+  .checkbox-group input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0;
   }
-  input, textarea {
-    padding: 0.65rem;
-    border: 1px solid #ccc;
+  
+  /* Preview Box */
+  .preview-box {
+    background: #f9fafb;
+    border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    min-height: 120px;
+    white-space: pre-wrap;
   }
-  input:focus, textarea:focus {
-    border-color: #007bff;
-    outline: none;
+  
+  .preview-box a {
+    color: var(--secondary-blue);
+    text-decoration: underline;
   }
-  button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
+  
+  /* Table Styles */
+  .table-container {
+    overflow-x: auto;
     border-radius: 8px;
-    padding: 0.75rem;
-    font-size: 1rem;
+    border: 1px solid var(--border);
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  
+  .table th {
+    background: #f9fafb;
+    padding: 0.75rem 1rem;
+    text-align: left;
     font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border);
   }
-  button:hover {
-    background-color: #0056b3;
+  
+  .table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
   }
-  @media (min-width: 600px) {
-    form {
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem 1.5rem;
+  
+  .table tr:hover {
+    background: #f9fafb;
+  }
+  
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .badge-sms {
+    background: #ecfeff;
+    color: #0369a1;
+  }
+  
+  .badge-email {
+    background: #eef2ff;
+    color: #3730a3;
+  }
+  
+  /* Filters */
+  .filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .filter-group label {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+  
+  .filter-group select {
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
     }
-    .form-group.full {
-      grid-column: 1 / -1;
+    
+    .header-content {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    
+    .nav-tabs .container {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    
+    .nav-tab {
+      white-space: nowrap;
+      padding: 0.75rem 1rem;
     }
   }
-    .preview-box {
-  white-space: pre-wrap;
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 1rem;
-  color: #333;
-  min-height: 120px;
-}
-.preview-box a {
-  color: #007bff;
-  text-decoration: underline;
-}
-}
-.footer-logo {
-  margin-top: 2rem;
-  text-align: center;
-  padding: 1rem;
-}
-
-.footer-logo img {
-  height: 40px;
-  opacity: 0.85;
-  transition: opacity 0.3s ease;
-}
-
-.footer-logo img:hover {
-  opacity: 1;
-}
-</style>
+  
+  /* Footer */
+  .footer-logo {
+    margin-top: 3rem;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .footer-logo img {
+    height: 40px;
+    opacity: 0.85;
+    transition: opacity 0.3s ease;
+  }
+  
+  .footer-logo img:hover {
+    opacity: 1;
+  }
+  
+  /* Loading states */
+  .loading {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  /* Empty states */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+  }
+  
+  .empty-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+  </style>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
@@ -143,61 +415,137 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
 </head>
 <body>
-  <div class="logo-container">
-    <img src="https://dummyimage.com/200x60/007bff/ffffff&text=Your+Logo" alt="Logo">
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo-section">
+          <img id="practiceLogo" src="logo.png" alt="Logo">
+          <div id="practiceName" class="practice-name"></div>
+        </div>
+        <div class="header-actions">
+          <button id="profileBtn" class="btn btn-secondary btn-sm">Profile</button>
+          <button id="logoutBtn" class="btn btn-secondary btn-sm">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <div class="container">
+      <button class="nav-tab active" data-tab="send">Send Review Request</button>
+      <button class="nav-tab" data-tab="history">Delivery History</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Send Review Request Tab -->
+    <div id="send-tab" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2>Send Review Request</h2>
+        </div>
+        <div class="card-body">
+          <div id="headerText" class="loading">Loading...</div>
+          
+          <form id="patientForm">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fullName">Patient Full Name</label>
+                <input type="text" id="fullName" name="fullName" required>
+              </div>
+
+              <div class="form-group">
+                <label for="preferredName">Preferred Name</label>
+                <input type="text" id="preferredName" name="preferredName" required>
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" placeholder="5551234567">
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email">
+              </div>
+
+              <div class="form-group full">
+                <label for="message">Custom Message</label>
+                <textarea id="message" name="message" rows="6" placeholder="Your message will go here..."></textarea>
+              </div>
+
+              <div class="form-group full">
+                <label>Message Preview</label>
+                <div id="messagePreview" class="preview-box"></div>
+              </div>
+
+              <div class="form-group full">
+                <div class="checkbox-group">
+                  <input type="checkbox" id="sendText" name="sendText">
+                  <label for="sendText">Send Text Message</label>
+                </div>
+                <div class="checkbox-group">
+                  <input type="checkbox" id="sendEmail" name="sendEmail">
+                  <label for="sendEmail">Send Email</label>
+                </div>
+              </div>
+
+              <div class="form-group full">
+                <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivery History Tab -->
+    <div id="history-tab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2>Recent Deliveries</h2>
+        </div>
+        <div class="card-body">
+          <div class="filters">
+            <div class="filter-group">
+              <label for="channelFilter">Channel:</label>
+              <select id="channelFilter">
+                <option value="all">All</option>
+                <option value="sms">SMS</option>
+                <option value="email">Email</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Patient</th>
+                  <th>Channel</th>
+                  <th>To</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody id="deliveriesBody">
+                <tr><td colspan="5" class="loading">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="header" id="headerText">
-    Review for: [Loading...]
-  </div>
-  
-  <div class="card">
-    <h2>Enter Patient Info</h2>
-    <form id="patientForm">
-      <div class="form-group">
-        <label for="fullName">Patient Full Name</label>
-        <input type="text" id="fullName" name="fullName" required>
-      </div>
 
-      <div class="form-group">
-        <label for="preferredName">Preferred Name</label>
-        <input type="text" id="preferredName" name="preferredName" required>
-      </div>
-
-      <div class="form-group">
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="phone" name="phone" placeholder="5551234567">
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email">
-      </div>
-
-      <div class="form-group full">
-        <label for="message">Custom Message</label>
-        <textarea id="message" name="message" rows="6" placeholder="Your message will go here..."></textarea>
-      </div>
-
-      <div class="form-group full">
-  <label>Message Preview</label>
-  <div id="messagePreview" class="preview-box"></div>
-</div>
-
-      <div class="form-group checkbox-group full">
-        <input type="checkbox" id="sendText" name="sendText">
-        <label for="sendText">Send Text Message</label>
-      </div>
-
-      <div class="form-group checkbox-group full">
-        <input type="checkbox" id="sendEmail" name="sendEmail">
-        <label for="sendEmail">Send Email</label>
-      </div>
-
-      <div class="form-group full">
-        <button type="submit">Send Message</button>
-      </div>
-    </form>
-  </div>
+  <!-- Footer -->
+  <footer class="footer-logo">
+    <a href="https://biminiai.com" target="_blank" rel="noopener">
+      <img src="biminilogo.png" alt="Bimini Logo">
+    </a>
+  </footer>
 
   <!-- Main Script -->
   <script>
@@ -215,35 +563,54 @@
   firebase.initializeApp(firebaseConfig);
   firebase.analytics();
   const db = firebase.firestore();
+  
 
   let reviewLink = "";
+  
+  // Tab Navigation
+  const tabs = document.querySelectorAll('.nav-tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetTab = tab.getAttribute('data-tab');
+      
+      // Remove active class from all tabs and contents
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      tab.classList.add('active');
+      document.getElementById(`${targetTab}-tab`).classList.add('active');
+    });
+  });
 
-  // 🔒 Get username first
-  const username = localStorage.getItem("username");
-
-  if (!username) {
-    window.location.href = "index.html";
-    return;
-  }
  // Preferred name behavior
  const preferredNameInput = document.getElementById("preferredName");
 const messageBox = document.getElementById("message");
 
 const messagePreview = document.getElementById("messagePreview");
 
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // 📤 Live preview with link formatting
-
-
-// 🔁 Update preview whenever message box changes
 messageBox.addEventListener("input", updateMessagePreview);
 
 function updateMessagePreview() {
-  let previewText = messageBox.value;
+  let previewText = escapeHtml(messageBox.value);
 
-  // Replace any URL with a clickable link
+  // Replace any URL with a clickable link (url itself is inserted as attribute)
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   previewText = previewText.replace(urlRegex, function(url) {
-    return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
+    const safeUrl = escapeHtml(url);
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Click here to leave a review</a>`;
   });
 
   messagePreview.innerHTML = previewText.replace(/\n/g, "<br>");
@@ -286,50 +653,128 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
 
 
-  // 🔗 Load review link early
-db.collection("users").doc(username).get()
-  .then(doc => {
-    if (doc.exists && doc.data().reviewLink) {
-      reviewLink = doc.data().reviewLink;
-      console.log("✅ Review link loaded early:", reviewLink);
+  // 🔒 Enforce login and load user profile by UID
+  let currentUser = null;
+  let unsubscribeDeliveries = null;
+  let lastDeliveries = [];
 
-      // ✅ Force message update regardless of preferred name field
-      updateMessageWithPreferredName();
-      updateMessagePreview();  // 🟢 force preview to re-render after link is injected
-
-    } else {
-      console.warn("⚠️ No review link found for user.");
-    }
-  })
-    .catch(err => {
-      console.error("❌ Error loading review link:", err);
-    });
-
-  // 🧾 Update header
-db.collection("users").doc(username).get()
-  .then(doc => {
-    if (doc.exists) {
-      const data = doc.data();
-      const fullname = data.fullname || username;
-      document.getElementById("headerText").textContent = `Review for: ${fullname}`;
-    } else {
-      document.getElementById("headerText").textContent = `Review for: ${username}`;
-    }
-  })
-  .catch(err => {
-    console.error("❌ Error loading fullname for header:", err);
-    document.getElementById("headerText").textContent = `Review for: ${username}`;
-  });
-  // 🔒 Enforce login
-  firebase.auth().onAuthStateChanged((user) => {
+  firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
       console.warn("🔒 Not authenticated. Redirecting to login.");
       window.location.href = "index.html";
-    } else {
-      console.log("✅ Authenticated as:", user.email);
+      return;
+    }
+
+    console.log("✅ Authenticated as:", user.email);
+    currentUser = user;
+
+    try {
+      const qs = await db.collection("users").where("email", "==", user.email).limit(1).get();
+      if (!qs.empty) {
+        const data = qs.docs[0].data();
+        reviewLink = data.reviewLink || "";
+        console.log("✅ Review link loaded:", reviewLink);
+
+        const fullName = data.fullName || data.fullname || user.email;
+        document.getElementById("headerText").textContent = `Review for: ${fullName}`;
+
+        // Practice name/logo if available
+        if (data.logoUrl) {
+          const img = document.getElementById('practiceLogo');
+          img.src = data.logoUrl;
+        }
+        if (data.practiceName) {
+          document.getElementById('practiceName').textContent = data.practiceName;
+        }
+
+        // 🔁 If profile is incomplete, send to profile setup
+        if (!(data.fullName && data.reviewLink)) {
+          window.location.href = "profile.html";
+          return;
+        }
+
+        // Refresh message and preview after profile data loads
+        updateMessageWithPreferredName();
+        updateMessagePreview();
+
+        // Subscribe to recent deliveries
+        subscribeToDeliveries();
+      } else {
+        console.warn("⚠️ No profile found for email:", user.email);
+        // If no profile doc exists, go to profile setup
+        window.location.href = "profile.html";
+        return;
+      }
+    } catch (err) {
+      console.error("❌ Error loading user profile:", err);
+      document.getElementById("headerText").textContent = `Review for: ${user.email}`;
     }
   });
+  
+  // Actions: logout and profile
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { await firebase.auth().signOut(); } catch {}
+    window.location.href = 'index.html';
+  });
+  document.getElementById('profileBtn').addEventListener('click', () => {
+    window.location.href = 'profile.html';
+  });
      
+  // --- Deliveries rendering ---
+  function formatDate(ts) {
+    try {
+      if (!ts) return '-';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleString();
+    } catch { return '-'; }
+  }
+
+  function truncate(text, n) {
+    if (!text) return '';
+    return text.length > n ? text.slice(0, n - 1) + '…' : text;
+  }
+
+  function renderDeliveries(items) {
+    const tbody = document.getElementById('deliveriesBody');
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><h3>No deliveries yet</h3><p>Your sent messages will appear here</p></td></tr>';
+      return;
+    }
+    tbody.innerHTML = items.map(d => {
+      const patient = d.patientPreferredName || d.patientFullName || '';
+      const badgeClass = d.channel === 'sms' ? 'badge badge-sms' : 'badge badge-email';
+      const toPretty = d.channel === 'sms' ? d.to.replace('+1','(*** )***-') : d.to;
+      return `<tr>
+        <td>${formatDate(d.createdAt)}</td>
+        <td>${truncate(patient, 40)}</td>
+        <td><span class="${badgeClass}">${d.channel.toUpperCase()}</span></td>
+        <td>${truncate(toPretty, 40)}</td>
+        <td>${truncate(d.message, 120)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function subscribeToDeliveries() {
+    const channelSel = document.getElementById('channelFilter');
+    if (unsubscribeDeliveries) { unsubscribeDeliveries(); }
+    unsubscribeDeliveries = db.collection('deliveries')
+      .where('ownerEmail', '==', currentUser.email)
+      .orderBy('createdAt', 'desc')
+      .limit(50)
+      .onSnapshot(snap => {
+        lastDeliveries = snap.docs.map(doc => doc.data());
+        const filtered = channelSel.value === 'all' ? lastDeliveries : lastDeliveries.filter(d => d.channel === channelSel.value);
+        renderDeliveries(filtered);
+      }, err => {
+        console.warn('Failed to load deliveries', err);
+        renderDeliveries([]);
+      });
+    channelSel.addEventListener('change', () => {
+      const filtered = channelSel.value === 'all' ? lastDeliveries : lastDeliveries.filter(d => d.channel === channelSel.value);
+      renderDeliveries(filtered);
+    });
+  }
+
       document.getElementById("patientForm").addEventListener("submit", async function (e) {
         e.preventDefault();
 
@@ -345,39 +790,69 @@ db.collection("users").doc(username).get()
           return;
         }
 
-        // 🔗 Append review link if available
-        const linkLine = reviewLink ? `\n\nReview link: ${reviewLink}` : "";
+        // Build message variants with link if available and missing
+        const messageIncludesLink = reviewLink && message.includes(reviewLink);
+        const messageForSms = (reviewLink && !messageIncludesLink)
+          ? `${message}\n\n${reviewLink}`
+          : message;
 
         try {
           if (sendText && phone && message) {
             const smsPayload = {
               to: "+1" + phone.replace(/\D/g, ""),
-              body: message
+              body: messageForSms
             };
             console.log("📱 Sending SMS:", smsPayload);
             await db.collection("messages").add(smsPayload);
+            // Log delivery
+            try {
+              await db.collection('deliveries').add({
+                ownerEmail: user.email,
+                patientFullName: document.getElementById('fullName').value.trim(),
+                patientPreferredName: preferredName || '',
+                to: smsPayload.to,
+                channel: 'sms',
+                message: messageForSms,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            } catch (e) { console.warn('Failed to log SMS delivery', e); }
             alert("SMS message queued for delivery.");
           }
 
           if (sendEmail && email && message) {
 
             
+const safeHtml = escapeHtml(messageIncludesLink ? message : `${message}\n\n${reviewLink || ''}`)
+  .replace(/(https?:\/\/[^\s]+)/g, function(url) {
+    const safeUrl = escapeHtml(url);
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">Click here to leave a review</a>`;
+  })
+  .replace(/\n/g, "<br>");
+
 const mailPayload = {
   to: email,
-  from: "feedback@ezreviews.app",  // ✅ valid string
+  from: "feedback@ezreviews.app",
   message: {
-    subject: `We’d love your feedback, ${preferredName || "friend"}!`,
-    html: message
-      .replace(/(https?:\/\/[^\s]+)/g, function(url) {
-        return `<a href="${url}" target="_blank">Click here to leave a review</a>`;
-      })
-      .replace(/\n/g, "<br>")
+    subject: `We'd love your feedback, ${preferredName || "friend"}!`,
+    html: safeHtml
   }
 };
 
           
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
+            // Log delivery
+            try {
+              await db.collection('deliveries').add({
+                ownerEmail: user.email,
+                patientFullName: document.getElementById('fullName').value.trim(),
+                patientPreferredName: preferredName || '',
+                to: email,
+                channel: 'email',
+                message: messageIncludesLink ? message : `${message}\n\n${reviewLink || ''}`,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            } catch (e) { console.warn('Failed to log email delivery', e); }
             alert("Email queued for delivery.");
           }
         } catch (err) {
@@ -387,10 +862,5 @@ const mailPayload = {
       });
     });
   </script>
-    <footer class="footer-logo">
-    <a href="https://biminiai.com" target="_blank" rel="noopener">
-      <img src="biminilogo.png" alt="Bimini Logo">
-    </a>
-  </footer>
 </body>
 </html>

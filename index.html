@@ -61,35 +61,46 @@
 </head>
 <body>
 
+  <!-- Top bar for auxiliary actions -->
+  <div class="topbar">
+    <button id="logoutBtn" class="btn btn-secondary" style="display:none;">Log out</button>
+  </div>
+
   <!-- Logo -->
   <div class="logo-container">
     <img src="logo.png" alt="Logo" class="logo">
   </div>
 
-  <!-- Header Bar -->
-  <div class="header">
-    Welcome to the Feedback Portal
+  <!-- Tagline -->
+  <div class="muted-text" style="margin-top:.5rem; margin-bottom:1.25rem; text-align:center;">
+    Modern patient feedback — simple, professional, and fast.
   </div>
 
   <!-- Login Card -->
-  <div class="card">
-    <h2>Login</h2>
+  <div class="card" style="max-width:480px;">
+    <h2 style="margin-bottom:.5rem; text-align:center;">Welcome back</h2>
+    <p class="muted-text" style="text-align:center; margin-bottom:1.25rem;">Sign in to continue</p>
     <form id="loginForm">
       <div class="form-group full">
-        <label for="username">Username</label>
-        <input type="text" id="username" required>
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@clinic.com" required>
       </div>
 
       <div class="form-group full">
         <label for="password">Password</label>
-        <input type="password" id="password" required>
+        <input type="password" id="password" placeholder="••••••••" required>
       </div>
 
-      <div class="form-group full">
-        <button type="submit" class="submit-btn">Login</button>
+      <div class="form-group full" style="display:flex; gap:.75rem; align-items:center; justify-content:space-between;">
+        <button type="submit" class="btn btn-primary btn-pill btn-elevated btn-with-icon" style="flex:1.2;">
+          <span>Sign in</span>
+          <span class="icon">→</span>
+        </button>
+        <button type="button" id="forgotBtn" class="btn btn-link">Forgot password?</button>
       </div>
 
-      <p id="error" style="color:red; display:none; text-align:center;"></p>
+      <p id="error" class="error-text" style="display:none; text-align:center; margin-top:.25rem;"></p>
+      <p id="info" class="muted-text" style="display:none; text-align:center; margin-top:.25rem;"></p>
     </form>
   </div>
 
@@ -100,41 +111,68 @@
     document.getElementById("loginForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
       const errorElem = document.getElementById("error");
       errorElem.style.display = "none";
 
       try {
-        const userDocRef = db.collection("users").doc(username);
-        const userDoc = await userDocRef.get();
-
-        if (!userDoc.exists) {
-          throw new Error("Username not found");
-        }
-
-        const userData = userDoc.data();
-
-        if (userData.password !== password) {
-          throw new Error("Incorrect password");
-        }
-
-        const email = userData.email;
-
-        // ✅ Sign in with Firebase Auth using email/password from Firestore
+        // ✅ Sign in directly with Firebase Auth
         await firebase.auth().signInWithEmailAndPassword(email, password);
 
-        // ✅ Optionally log to verify authentication state
-        console.log("✅ Logged in as:", firebase.auth().currentUser?.email);
-
-        // ✅ Store username in localStorage for dashboard use
-        localStorage.setItem("username", username);
-
-        window.location.href = "dashboard.html";
+        // 🔎 Check profile to determine next step
+        const qs = await db.collection('users').where('email', '==', email).limit(1).get();
+        if (!qs.empty) {
+          const data = qs.docs[0].data();
+          if (data.needsPasswordChange === true) {
+            window.location.href = 'reset-password.html';
+            return;
+          }
+          if (!(data.fullName && data.reviewLink)) {
+            window.location.href = 'profile.html';
+            return;
+          }
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        // No profile doc yet → go set it up
+        window.location.href = 'profile.html';
       } catch (error) {
         errorElem.innerText = error.message;
         errorElem.style.display = "block";
       }
+    });
+
+    // Forgot password
+    document.getElementById('forgotBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const info = document.getElementById('info');
+      const err = document.getElementById('error');
+      info.style.display = 'none';
+      err.style.display = 'none';
+      if (!email) {
+        err.textContent = 'Enter your email above first.';
+        err.style.display = 'block';
+        return;
+      }
+      try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        info.textContent = 'Password reset email sent.';
+        info.style.display = 'block';
+      } catch (e) {
+        err.textContent = e.message;
+        err.style.display = 'block';
+      }
+    });
+
+    // Conditionally show logout if already signed in
+    firebase.auth().onAuthStateChanged((user) => {
+      const btn = document.getElementById('logoutBtn');
+      btn.style.display = user ? 'inline-flex' : 'none';
+    });
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try { await firebase.auth().signOut(); } catch {}
+      window.location.reload();
     });
   </script>
   <!-- Footer -->
