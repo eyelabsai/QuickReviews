@@ -125,8 +125,7 @@
         if (!qs.empty) {
           const data = qs.docs[0].data();
           if (data.needsPasswordChange === true) {
-            window.location.href = 'reset-password.html';
-            return;
+            try { localStorage.setItem('showPwReminder', '1'); } catch {}
           }
           if (!(data.fullName && data.reviewLink)) {
             window.location.href = 'profile.html';

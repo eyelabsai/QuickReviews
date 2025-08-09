@@ -346,6 +346,29 @@
         <div id="info" class="message success" style="display: none;"></div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Change Password</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label for="currentPassword">Current Password</label>
+          <input type="password" id="currentPassword" placeholder="Enter current password">
+        </div>
+        <div class="form-group">
+          <label for="newPassword">New Password</label>
+          <input type="password" id="newPassword" placeholder="At least 8 characters">
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirm New Password</label>
+          <input type="password" id="confirmPassword" placeholder="Re-enter new password">
+        </div>
+        <button id="changePwBtn" class="btn btn-primary btn-lg">Update Password</button>
+        <div id="pwError" class="message error" style="display:none;"></div>
+        <div id="pwInfo" class="message success" style="display:none;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Footer -->
@@ -472,6 +495,50 @@
 
     document.getElementById('backBtn').addEventListener('click', () => {
       window.location.href = 'dashboard.html';
+    });
+
+    // Change password handling
+    document.getElementById('changePwBtn').addEventListener('click', async () => {
+      const pwErr = document.getElementById('pwError');
+      const pwInfo = document.getElementById('pwInfo');
+      pwErr.style.display = 'none';
+      pwInfo.style.display = 'none';
+
+      const currentPassword = document.getElementById('currentPassword').value.trim();
+      const newPassword = document.getElementById('newPassword').value.trim();
+      const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+      if (!newPassword || newPassword.length < 8) {
+        pwErr.textContent = 'New password must be at least 8 characters';
+        pwErr.style.display = 'block';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        pwErr.textContent = 'Passwords do not match';
+        pwErr.style.display = 'block';
+        return;
+      }
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+          pwErr.textContent = 'Not signed in';
+          pwErr.style.display = 'block';
+          return;
+        }
+        // Re-auth is required for sensitive operations
+        const cred = firebase.auth.EmailAuthProvider.credential(user.email, currentPassword);
+        await user.reauthenticateWithCredential(cred);
+        await user.updatePassword(newPassword);
+        // Clear reminder flag and profile field if present
+        try { localStorage.removeItem('showPwReminder'); } catch {}
+        const qs = await db.collection('users').where('email', '==', user.email).limit(1).get();
+        if (!qs.empty) { await qs.docs[0].ref.set({ needsPasswordChange: false }, { merge: true }); }
+        pwInfo.textContent = 'Password updated successfully';
+        pwInfo.style.display = 'block';
+      } catch (e) {
+        pwErr.textContent = e.message || 'Failed to update password';
+        pwErr.style.display = 'block';
+      }
     });
   </script>
 </body>

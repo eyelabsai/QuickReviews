@@ -61,7 +61,8 @@ async function main() {
   await docRef.set({
     email,
     fullName,
-    reviewLink
+    reviewLink,
+    needsPasswordChange: true
   }, { merge: true });
 
   console.log('Profile upserted at:', docRef.path);
