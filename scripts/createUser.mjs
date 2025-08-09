@@ -43,16 +43,75 @@ async function main() {
 
   // Create Auth user (idempotent on email)
   let userRecord;
-  try {
-    userRecord = await admin.auth().getUserByEmail(email);
-    console.log(`User exists: ${userRecord.uid}`);
-  } catch (err) {
-    if (err.code === 'auth/user-not-found') {
-      userRecord = await admin.auth().createUser({ email, password, emailVerified: true });
-      console.log(`Created user: ${userRecord.uid}`);
-    } else {
-      throw err;
+  // Duplicate/typo guards
+  function normalizeEmailForDupCheck(e) {
+    const [localRaw, domainRaw] = String(e).toLowerCase().split('@');
+    const domain = (domainRaw || '').trim();
+    const local = (localRaw || '').trim();
+    if (domain === 'gmail.com' || domain === 'googlemail.com') {
+      const plus = local.indexOf('+');
+      const base = plus >= 0 ? local.slice(0, plus) : local;
+      return `${base.replace(/\./g, '')}@gmail.com`;
     }
+    return `${local}@${domain}`;
+  }
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + cost
+        );
+      }
+    }
+    return dp[m][n];
+  }
+  async function findSimilarUsers(targetEmail) {
+    const normalizedTarget = normalizeEmailForDupCheck(targetEmail);
+    let nextPageToken = undefined;
+    let similar = [];
+    while (true) {
+      const page = await admin.auth().listUsers(1000, nextPageToken);
+      for (const u of page.users) {
+        const e = (u.email || '').toLowerCase();
+        if (!e) continue;
+        if (e === targetEmail.toLowerCase()) {
+          return { exact: u, similar };
+        }
+        const n = normalizeEmailForDupCheck(e);
+        if (n === normalizedTarget) {
+          similar.push({ uid: u.uid, email: e, reason: 'same-normalized' });
+        } else {
+          const d = levenshtein(e, targetEmail.toLowerCase());
+          if (d === 1) similar.push({ uid: u.uid, email: e, reason: 'edit-distance-1' });
+        }
+      }
+      if (!page.pageToken) break;
+      nextPageToken = page.pageToken;
+    }
+    return { exact: null, similar };
+  }
+
+  const dupCheck = await findSimilarUsers(email);
+  if (dupCheck.exact) {
+    userRecord = dupCheck.exact;
+    console.log(`User exists: ${userRecord.uid}`);
+    // Ensure password is current
+    await admin.auth().updateUser(userRecord.uid, { password, emailVerified: true });
+  } else if (dupCheck.similar.length && !argv.force) {
+    console.error('Potential duplicate/typo detected:');
+    dupCheck.similar.slice(0, 5).forEach(s => console.error(`- ${s.email} (${s.reason})`));
+    console.error('If this is intentional, re-run with --force');
+    process.exit(1);
+  } else {
+    userRecord = await admin.auth().createUser({ email, password, emailVerified: true });
+    console.log(`Created user: ${userRecord.uid}`);
   }
 
   // Write Firestore profile (doc can be ID = uid or existing email doc)
@@ -81,6 +140,12 @@ async function main() {
     for (let i = 0; i < 50; i++) {
       const doc = await db.collection('usernames').doc(candidate).get();
       if (!doc.exists) { finalUsername = candidate; break; }
+      const data = doc.data() || {};
+      if (data.email && data.email !== email) {
+        // Owned by someone else; try a different suffix
+      } else if (data.email === email || data.uid === userRecord.uid) {
+        finalUsername = candidate; break; // Claiming our own mapping is fine
+      }
       candidate = `${desired}${Math.floor(1000 + Math.random()*9000)}`;
     }
     if (!finalUsername) throw new Error('Could not assign a unique username after multiple attempts.');

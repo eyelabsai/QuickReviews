@@ -36,7 +36,9 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid', 'email', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email;
-      allow update, delete: if false;
+      // Allow owner to delete their own mapping to change username
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow update: if false;
     }
 
     // Outbound SMS queue: allow authenticated creates with basic validation
