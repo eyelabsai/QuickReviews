@@ -929,6 +929,22 @@ let htmlWithLinks = escapeHtml(messageForSending)
     return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
   });
 
+// If email body lacks the placeholder or direct link, append a friendly link line
+if (reviewLink && !messageForSending.includes("[Click here to leave a review]") && !(fiveStarReviewLink && messageForSending.includes(fiveStarReviewLink))) {
+  messageForSending += "\n\nPlease leave us a review: [Click here to leave a review]";
+  // Recompute htmlWithLinks because message changed
+  htmlWithLinks = escapeHtml(messageForSending)
+    .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
+      const safeUrl = escapeHtml(url);
+      const before = full.slice(Math.max(0, offset - 10), offset);
+      if (before.includes('href="') || before.includes("href='")) return url;
+      if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+      }
+      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
+    });
+}
+
 const safeHtml = htmlWithLinks
   .replace(/\[Click here to leave a review\]/g, function() {
     const safeUrl = escapeHtml(fiveStarReviewLink);
