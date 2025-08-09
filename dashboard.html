@@ -922,6 +922,10 @@ const safeHtml = escapeHtml(messageForSending)
   })
   .replace(/(https?:\/\/[^\s]+)/g, function(url) {
     const safeUrl = escapeHtml(url);
+    // Skip URLs that are already inside anchor tags to prevent double-linking
+    if (safeHtml.includes(`href="${safeUrl}"`)) {
+      return url;
+    }
     // Check if it's a Google review link and make it more user-friendly
     if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
       return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;

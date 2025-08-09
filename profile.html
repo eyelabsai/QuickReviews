@@ -482,6 +482,8 @@
         const updates = { fullName, reviewLink };
         if (practiceName) updates.practiceName = practiceName;
         if (logoUrl) updates.logoUrl = logoUrl;
+        // Remove legacy username field if present
+        updates.username = firebase.firestore.FieldValue.delete();
 
         await userDocRef.update(updates);
         info.textContent = 'Profile saved successfully! Redirecting to dashboard...';
