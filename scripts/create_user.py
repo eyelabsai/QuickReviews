@@ -9,9 +9,20 @@ import firebase_admin
 from firebase_admin import credentials, auth, firestore
 
 
-def generate_temp_password(length: int = 14) -> str:
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
-    return "".join(secrets.choice(alphabet) for _ in range(length))
+def generate_temp_password(length: int = 8) -> str:
+    # Use only letters and numbers, no special characters
+    alphabet = string.ascii_letters + string.digits
+    # Ensure at least one letter and one number
+    password = []
+    password.append(secrets.choice(string.ascii_lowercase))  # One lowercase letter
+    password.append(secrets.choice(string.digits))           # One number
+    # Fill the rest randomly
+    for _ in range(length - 2):
+        password.append(secrets.choice(alphabet))
+    # Shuffle the password
+    password_list = list(password)
+    secrets.SystemRandom().shuffle(password_list)
+    return ''.join(password_list)
 
 
 def main() -> None:
