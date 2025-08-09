@@ -899,26 +899,30 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           return;
         }
 
-        // Build message variants with link if available and missing
-        const messageIncludesLink = reviewLink && message.includes(reviewLink);
+        // Build message variants from the user's template
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
-        
-        // Replace "[Click here to leave a review]" with actual URL for sending
-        let messageForSending = message;
-        if (reviewLink && message.includes("[Click here to leave a review]")) {
-          messageForSending = message.replace("[Click here to leave a review]", fiveStarReviewLink);
+        const messageTemplate = message;
+
+        // SMS: use the URL directly (most SMS apps will auto-link it)
+        let messageForSms = messageTemplate;
+        if (reviewLink) {
+          const smsUrl = fiveStarReviewLink;
+          if (messageTemplate.includes("[Click here to leave a review]")) {
+            messageForSms = messageTemplate.replace("[Click here to leave a review]", smsUrl);
+          } else if (messageTemplate.includes(fiveStarReviewLink) || messageTemplate.includes(reviewLink)) {
+            // Keep the existing URL as-is
+            messageForSms = messageTemplate.replace(reviewLink, smsUrl);
+          } else {
+            messageForSms = `${messageTemplate}\n\nPlease leave us a review: ${smsUrl}`;
+          }
         }
-        
-        // For SMS, include the URL but make it user-friendly
-        let messageForSms = messageForSending;
-        if (reviewLink && messageForSending.includes("[Click here to leave a review]")) {
-          // For SMS, show the hyperlink text followed by a shorter URL format
-          const shortUrl = fiveStarReviewLink.replace('https://', '').replace('http://', '');
-          messageForSms = messageForSending.replace("[Click here to leave a review]", `Click here to leave a review: ${shortUrl}`);
-        } else if (reviewLink && !messageForSending.includes(fiveStarReviewLink) && !messageForSending.includes("[Click here to leave a review]")) {
-          // For SMS, add the hyperlink text and shorter URL
-          const shortUrl = fiveStarReviewLink.replace('https://', '').replace('http://', '');
-          messageForSms = `${messageForSending}\n\nPlease leave us a review: Click here to leave a review: ${shortUrl}`;
+
+        // Email: keep a plain text version for logging while HTML is built separately
+        let messageForEmailText = messageTemplate;
+        if (reviewLink && messageTemplate.includes("[Click here to leave a review]")) {
+          messageForEmailText = messageTemplate.replace("[Click here to leave a review]", fiveStarReviewLink);
+        } else if (reviewLink && !messageTemplate.includes(fiveStarReviewLink)) {
+          messageForEmailText = `${messageTemplate}\n\nPlease leave us a review: ${fiveStarReviewLink}`;
         }
 
         try {
@@ -945,9 +949,9 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           }
 
           if (sendEmail && email && message) {
-
             
-let htmlWithLinks = escapeHtml(messageForSending)
+            
+            let htmlWithLinks = escapeHtml(messageTemplate)
   .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
     const safeUrl = escapeHtml(url);
     // If this URL is already part of an href attribute, skip
@@ -960,10 +964,11 @@ let htmlWithLinks = escapeHtml(messageForSending)
   });
 
 // If email body lacks the placeholder or direct link, append a friendly link line
-if (reviewLink && !messageForSending.includes("[Click here to leave a review]") && !(fiveStarReviewLink && messageForSending.includes(fiveStarReviewLink))) {
-  messageForSending += "\n\nPlease leave us a review: [Click here to leave a review]";
+if (reviewLink && !messageTemplate.includes("[Click here to leave a review]") && !(fiveStarReviewLink && messageTemplate.includes(fiveStarReviewLink))) {
+  // Update the template so preview/logging are consistent
+  const augmentedTemplate = `${messageTemplate}\n\nPlease leave us a review: [Click here to leave a review]`;
   // Recompute htmlWithLinks because message changed
-  htmlWithLinks = escapeHtml(messageForSending)
+  htmlWithLinks = escapeHtml(augmentedTemplate)
     .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
       const safeUrl = escapeHtml(url);
       const before = full.slice(Math.max(0, offset - 10), offset);
@@ -1011,7 +1016,7 @@ const mailPayload = {
                 patientPreferredName: preferredName || '',
                 to: email,
                 channel: 'email',
-                message: messageForSending,
+                message: messageForEmailText,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
               });
             } catch (e) { console.warn('Failed to log email delivery', e); }
