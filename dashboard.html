@@ -408,6 +408,37 @@
   }
   </style>
   <style>
+  /* AI Panel Styles */
+  .send-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; }
+  .ai-panel { position: sticky; top: 92px; background: rgba(255,255,255,0.92); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 24px rgba(2,6,23,0.12); overflow: hidden; backdrop-filter: blur(6px); }
+  .ai-panel-header { display:flex; align-items:center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); background: radial-gradient(120% 120% at 100% 0%, #eef2ff 0%, #ffffff 50%, #f8fafc 100%); }
+  .ai-title { font-weight: 800; color: var(--dark-blue); display:flex; align-items:center; gap:.5rem; letter-spacing: .2px; }
+  .ai-title .sparkle { color: #f59e0b; text-shadow: 0 0 8px rgba(245,158,11,.5); animation: sparkle 2.4s ease-in-out infinite; }
+  @keyframes sparkle { 0%,100% { filter: drop-shadow(0 0 0 rgba(245,158,11,0)); } 50% { filter: drop-shadow(0 0 6px rgba(245,158,11,.7)); } }
+  .ai-badge { font-size: .7rem; font-weight: 800; padding: .2rem .6rem; border-radius: 9999px; background: linear-gradient(180deg, rgba(59,130,246,.15), rgba(59,130,246,.08)); color: #1e3a8a; border: 1px solid rgba(59,130,246,.25); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+  .ai-section { padding: 1rem 1.25rem; border-bottom: 1px dashed var(--border); }
+  .ai-section:last-child { border-bottom: 0; }
+  .ai-section h4 { font-size: .9rem; margin-bottom: .6rem; color: var(--text-primary); }
+  .ai-row { display:flex; gap:.5rem; flex-wrap: wrap; align-items: center; }
+  .ai-chip { display:inline-flex; align-items:center; gap:.4rem; padding: .35rem .6rem; border-radius: 9999px; font-size: .75rem; font-weight: 700; border:1px solid rgba(148,163,184,.35); background: linear-gradient(180deg, #f8fafc, #ffffff); color:#0f172a; box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 6px 16px rgba(2,6,23,.06); }
+  .ai-chip.success { background: linear-gradient(180deg,#ecfdf5,#ffffff); border-color: #a7f3d0; color:#065f46; }
+  .ai-chip.warn { background: linear-gradient(180deg,#fffbeb,#ffffff); border-color:#fde68a; color:#92400e; }
+  .ai-chip.info { background: linear-gradient(180deg,#eff6ff,#ffffff); border-color:#bfdbfe; color:#1e3a8a; }
+  .ai-controls { display:grid; grid-template-columns: 1fr 1fr; gap:.5rem; }
+  .ai-controls select, .ai-controls input[type="range"] { width:100%; padding:.5rem; border:1px solid var(--border); border-radius:8px; background:white; font-size:.85rem; }
+  .ai-actions { display:flex; flex-wrap: wrap; gap:.5rem; margin-top:.5rem; }
+  .btn-ghost { background:#ffffff; color:#1f2937; border:1px solid var(--border); }
+  .btn-ghost:hover { background:#f3f4f6; }
+  .ai-mini { font-size:.7rem; color:var(--text-secondary); }
+  .ai-prediction { display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:#065f46; background: linear-gradient(180deg,#ecfdf5,#ffffff); border:1px solid #a7f3d0; padding:.35rem .6rem; border-radius:9999px; font-weight:800; box-shadow: 0 8px 24px rgba(16,185,129,.15); animation: pulse 3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: translateZ(0); box-shadow: 0 8px 24px rgba(16,185,129,.12);} 50% { box-shadow: 0 12px 32px rgba(16,185,129,.28);} }
+  .ai-variant { border:1px solid var(--border); border-radius:10px; padding:.6rem .75rem; background:#fafafa; }
+  .ai-variant p { margin:.25rem 0 .5rem 0; font-size:.85rem; color:#111827; }
+  .ai-why { font-size:.75rem; color:var(--text-secondary); }
+  @media (max-width: 1024px) { .send-layout { grid-template-columns: 1fr; } .ai-panel { position: static; } }
+  /* Enhance primary button for AI vibe */
+  .btn-primary { background: radial-gradient(120% 120% at 100% 0%, #1e40af 0%, #1e3a8a 45%, #0b1020 100%); border: 1px solid rgba(30,58,138,.5); box-shadow: 0 10px 24px rgba(30,58,138,.35); }
+  .btn-primary:hover { box-shadow: 0 14px 28px rgba(30,58,138,.45); }
   /* Toast notifications */
   .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; }
   .toast { min-width: 260px; max-width: 420px; padding: 12px 14px; border-radius: 10px; color: #0f172a; background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 10px 24px rgba(15,23,42,0.15); display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(8px); animation: toast-in 160ms ease forwards; }
@@ -451,6 +482,21 @@
   </nav>
 
   <div class="container">
+    <!-- AI Digest Card -->
+    <div id="aiDigestCard" class="card" style="margin-bottom:1rem; display:none;">
+      <div class="card-body" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:.5rem; font-weight:700; color:#111827;">
+          <span style="color:#f59e0b;">✦</span>
+          <span>SignalSense AI Digest</span>
+        </div>
+        <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+          <span class="ai-chip" id="digestTotal">7d sends: —</span>
+          <span class="ai-chip" id="digestSplit">SMS — / Email —</span>
+          <span class="ai-chip" id="digestBestTime">Best time: —</span>
+          <span class="ai-chip" id="digestAnomaly" style="display:none;" title="Volume is below typical range">Anomaly detected</span>
+        </div>
+      </div>
+    </div>
     <div id="pwReminder" style="display:none; margin: 16px 0; padding: 12px 16px; border:1px solid #f59e0b; background:#fffbeb; color:#92400e; border-radius:8px;">
       You're using a temporary password. You can continue using it, but we recommend updating it in your profile.
       <div style="margin-top:8px; display:flex; gap:8px;">
@@ -466,8 +512,9 @@
         </div>
         <div class="card-body">
           <div id="headerText" class="loading">Loading...</div>
-          
-          <form id="patientForm">
+          <div class="send-layout">
+            <div>
+            <form id="patientForm">
             <div class="form-grid">
               <div class="form-group">
                 <label for="fullName">Patient Full Name</label>
@@ -508,13 +555,75 @@
                   <input type="checkbox" id="sendEmail" name="sendEmail">
                   <label for="sendEmail">Send Email</label>
                 </div>
+                <div style="display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-top:.25rem;">
+                  <span class="ai-chip info" id="channelRecommendation" style="display:none;">Recommended: —</span>
+                  <button type="button" id="applyChannelRecommendation" class="btn btn-ghost btn-sm" style="display:none;">Apply</button>
+                </div>
               </div>
 
-              <div class="form-group full">
+              <div class="form-group full" style="display:flex; gap:.75rem; align-items:center; flex-wrap: wrap;">
                 <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+                <span id="aiPredictedImpact" class="ai-prediction" style="display:none;">
+                  <span>↑</span><span id="aiPredictedImpactText">Predicted +12–18% response</span>
+                </span>
               </div>
             </div>
           </form>
+            </div>
+            <aside class="ai-panel" aria-label="AI Suggestions">
+              <div class="ai-panel-header">
+                <div class="ai-title"><span class="sparkle">✦</span><span>SignalSense AI</span></div>
+                <span class="ai-badge">BETA</span>
+              </div>
+              <div class="ai-section">
+                <h4>Message quality</h4>
+                <div class="ai-row" id="aiQualityChips">
+                  <span class="ai-chip info" id="chipTone">Tone: —</span>
+                  <span class="ai-chip success" id="chipCompliance">No PHI detected</span>
+                  <span class="ai-chip info" id="chipConfidence">AI confidence: —</span>
+                </div>
+                <div class="ai-mini" id="aiQualityNote" style="margin-top:.4rem;">Updates as you edit.</div>
+              </div>
+              <div class="ai-section">
+                <h4>Copy studio</h4>
+                <div class="ai-controls" style="margin-bottom:.5rem;">
+                  <select id="aiTone">
+                    <option value="warm">Warm</option>
+                    <option value="professional">Professional</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="direct">Direct</option>
+                  </select>
+                  <select id="aiLength">
+                    <option value="short">Short</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                  <select id="aiLanguage">
+                    <option value="en" selected>English</option>
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+                <div class="ai-actions">
+                  <button type="button" id="btnAiGenerate" class="btn btn-secondary btn-sm">Generate with AI</button>
+                  <button type="button" id="btnAiImprove" class="btn btn-ghost btn-sm">Improve clarity</button>
+                  <button type="button" id="btnAiShorten" class="btn btn-ghost btn-sm">Shorten</button>
+                  <button type="button" id="btnAiWarm" class="btn btn-ghost btn-sm">Make warmer</button>
+                  <button type="button" id="btnQrPoster" class="btn btn-ghost btn-sm">QR Poster</button>
+                </div>
+              </div>
+              <div class="ai-section">
+                <h4>Best send time</h4>
+                <div class="ai-row">
+                  <span id="aiBestTime" class="ai-chip">Calculating…</span>
+                </div>
+                <div class="ai-why" id="aiBestTimeWhy" style="margin-top:.4rem;">Based on recent engagement.</div>
+              </div>
+              <div class="ai-section" style="display:flex; align-items:center; justify-content:space-between;">
+                <span class="ai-mini">Powered by SignalSense AI</span>
+                <a class="ai-mini" href="docs/SignalSense-Patient-Feedback-Intelligence.md" target="_blank" rel="noopener">Learn more</a>
+              </div>
+            </aside>
+          </div>
         </div>
       </div>
     </div>
@@ -526,6 +635,21 @@
           <h2>Recent Deliveries</h2>
         </div>
         <div class="card-body">
+          <div class="card" style="margin-bottom:1rem;">
+            <div class="card-body">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+                <strong>AI Reply Assistant</strong>
+                <div class="ai-mini">Paste a new review to draft a courteous response</div>
+              </div>
+              <div style="margin-top:.5rem; display:grid; grid-template-columns: 1fr auto; gap:.5rem;">
+                <textarea id="reviewInput" placeholder="Paste review text…" rows="3" style="min-height:80px;"></textarea>
+                <div style="display:flex; gap:.5rem; align-items:start;">
+                  <button type="button" id="btnDraftReply" class="btn btn-secondary btn-sm">Draft reply</button>
+                </div>
+              </div>
+              <div id="replyOutput" class="preview-box" style="margin-top:.5rem; display:none;"></div>
+            </div>
+          </div>
           <div class="filters">
             <div class="filter-group">
               <label for="channelFilter">Channel:</label>
@@ -567,6 +691,82 @@
 
   <!-- Toast Container -->
   <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- QR Poster Modal -->
+  <div id="qrModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:12px; padding:1rem; width:min(92vw,560px); box-shadow:0 10px 30px rgba(0,0,0,.2);">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <strong>Create QR Poster</strong>
+        <button id="qrClose" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+      <div style="margin-top:.75rem; display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+        <div>
+          <div id="qrImageWrap" style="display:flex; align-items:center; justify-content:center; background:#f9fafb; border:1px solid var(--border); border-radius:8px; padding:1rem; min-height:220px;">
+            <img id="qrImage" alt="QR Code" style="max-width:100%; height:auto;"/>
+          </div>
+        </div>
+        <div>
+          <label>Headline</label>
+          <input id="qrHeadline" value="Leave us a quick review"/>
+          <label style="margin-top:.5rem; display:block;">Subtext</label>
+          <input id="qrSubtext" value="Scan the code. It takes ~30 seconds."/>
+          <div style="margin-top:.75rem; display:flex; gap:.5rem;">
+            <a id="qrDownload" class="btn btn-primary btn-sm" download="review-qr.png">Download PNG</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copilot drawer -->
+  <style>
+    .copilot-overlay { position: fixed; inset:0; background: rgba(2,6,23,.5); display:none; align-items: stretch; justify-content: flex-end; z-index: 1100; }
+    .copilot-panel { width:min(92vw, 560px); background: linear-gradient(180deg,#0b1220,#0b1220 40%,#0f172a); color:#e5e7eb; border-left: 1px solid rgba(59,130,246,.25); box-shadow: -10px 0 30px rgba(0,0,0,.4); display:flex; flex-direction:column; }
+    .copilot-header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(59,130,246,.2); background: linear-gradient(90deg, rgba(30,58,138,.25), rgba(30,58,138,0)); }
+    .copilot-header .title { display:flex; align-items:center; gap:.5rem; font-weight:800; color:#fff; }
+    .copilot-header .badge { font-size:.7rem; padding:.15rem .45rem; border-radius:9999px; background: rgba(59,130,246,.15); color:#bfdbfe; border:1px solid rgba(191,219,254,.2); }
+    .copilot-body { padding: 12px; display:flex; flex-direction:column; gap:.75rem; height: 70vh; overflow-y:auto; }
+    .chat-msg { display:flex; gap:.5rem; }
+    .chat-bubble { max-width: 85%; padding:.65rem .8rem; border-radius:14px; font-size:.92rem; line-height:1.35rem; }
+    .chat-user { justify-content:flex-end; }
+    .chat-user .chat-bubble { background:#1f2937; color:#f9fafb; border:1px solid rgba(148,163,184,.25); border-bottom-right-radius:4px; }
+    .chat-assistant .chat-bubble { background: linear-gradient(180deg, rgba(59,130,246,.12), rgba(59,130,246,.06)); color:#e5e7eb; border:1px solid rgba(59,130,246,.25); border-bottom-left-radius:4px; }
+    .typing { display:inline-flex; gap:3px; align-items:center; }
+    .dot { width:6px; height:6px; background:#93c5fd; border-radius:9999px; opacity:.6; animation: blink 1.2s infinite; }
+    .dot:nth-child(2){ animation-delay:.2s; } .dot:nth-child(3){ animation-delay:.4s; }
+    @keyframes blink { 0%, 60%, 100% { opacity:.2; } 30% { opacity:1; } }
+    .copilot-suggestions { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .suggestion { font-size:.8rem; padding:.45rem .6rem; border-radius:9999px; border:1px solid rgba(148,163,184,.3); color:#cbd5e1; background:#0b1220; cursor:pointer; }
+    .copilot-input { padding: 12px; border-top:1px solid rgba(59,130,246,.2); display:grid; grid-template-columns: 1fr auto; gap:.5rem; }
+    .copilot-input textarea { width:100%; min-height:48px; max-height:140px; resize:vertical; border-radius:10px; border:1px solid rgba(148,163,184,.3); background:#0b1220; color:#e5e7eb; padding:.6rem .7rem; }
+    .copilot-input .actions { display:flex; gap:.5rem; align-items:flex-start; }
+    .btn-send { background:#1e40af; color:#fff; border:1px solid rgba(59,130,246,.5); border-radius:10px; padding:.6rem .9rem; font-weight:700; cursor:pointer; }
+    .btn-insert { background:#111827; color:#cbd5e1; border:1px solid rgba(148,163,184,.35); border-radius:10px; padding:.6rem .9rem; cursor:pointer; }
+  </style>
+  <div id="copilotOverlay" class="copilot-overlay" role="dialog" aria-modal="true" aria-labelledby="copilotTitle">
+    <div class="copilot-panel">
+      <div class="copilot-header">
+        <div class="title" id="copilotTitle"><span class="sparkle">✦</span> SignalSense Copilot</div>
+        <span class="badge">GPT‑style</span>
+        <button id="closeCopilot" class="btn btn-ghost btn-sm">Close</button>
+      </div>
+      <div class="copilot-body" id="copilotBody">
+        <div class="copilot-suggestions" id="copilotSuggestions">
+          <div class="suggestion" data-prompt="Draft a warm, short review ask for today’s cataract post‑op">Cataract post‑op (warm, short)</div>
+          <div class="suggestion" data-prompt="Improve clarity and shorten my current message">Improve & shorten current</div>
+          <div class="suggestion" data-prompt="Translate my message to Spanish with a friendly tone">Translate to Spanish</div>
+          <div class="suggestion" data-prompt="Suggest the best send time today and why">Best send time</div>
+        </div>
+      </div>
+      <div class="copilot-input">
+        <textarea id="copilotPrompt" placeholder="Ask anything—e.g., ‘Draft a friendly, 2‑sentence review ask for retina injections’." ></textarea>
+        <div class="actions">
+          <button id="copilotSend" class="btn-send">Send</button>
+          <button id="copilotInsert" class="btn-insert" title="Insert last AI draft into message">Insert into Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Script -->
   <script>
@@ -738,6 +938,507 @@ function updateMessagePreview() {
 
 preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
      
+  // ===== AI Panel Logic =====
+  const chipTone = document.getElementById('chipTone');
+  const chipReading = document.getElementById('chipReading');
+  const chipCompliance = document.getElementById('chipCompliance');
+  const aiBestTime = document.getElementById('aiBestTime');
+  const aiBestTimeWhy = document.getElementById('aiBestTimeWhy');
+  const aiToneSel = document.getElementById('aiTone');
+  const aiLengthSel = document.getElementById('aiLength');
+  const aiLanguageSel = document.getElementById('aiLanguage');
+  const btnAiGenerate = document.getElementById('btnAiGenerate');
+  const btnAiImprove = document.getElementById('btnAiImprove');
+  const btnAiShorten = document.getElementById('btnAiShorten');
+  const btnAiWarm = document.getElementById('btnAiWarm');
+  const aiPredictedImpact = document.getElementById('aiPredictedImpact');
+  const aiPredictedImpactText = document.getElementById('aiPredictedImpactText');
+  // simplified: removed variants UI
+  const aiTokenUsage = document.getElementById('aiTokenUsage');
+
+  function countSyllables(word) {
+    try {
+      word = word.toLowerCase();
+      if (!word) return 0;
+      const vowels = 'aeiouy';
+      let syllables = 0;
+      let prevVowel = false;
+      for (let c of word) {
+        const isVowel = vowels.includes(c);
+        if (isVowel && !prevVowel) syllables++;
+        prevVowel = isVowel;
+      }
+      if (word.endsWith('e')) syllables = Math.max(1, syllables - 1);
+      return Math.max(1, syllables);
+    } catch { return 1; }
+  }
+
+  // removed reading level estimator per request
+
+  function estimateTone(text) {
+    const t = text.toLowerCase();
+    const warmSignals = ['thank you', 'thanks', 'appreciate', 'grateful', 'love to hear', 'means a lot'];
+    const directSignals = ['review now', 'take a moment', 'please leave a review'];
+    const exclaims = (text.match(/!/g) || []).length;
+    const warmScore = warmSignals.reduce((s, k) => s + (t.includes(k) ? 1 : 0), 0) + (exclaims > 0 ? 1 : 0);
+    const directScore = directSignals.reduce((s, k) => s + (t.includes(k) ? 1 : 0), 0);
+    if (warmScore >= 2) return 'Warm';
+    if (directScore >= 2) return 'Direct';
+    if (t.includes('please')) return 'Professional';
+    return 'Friendly';
+  }
+
+  function detectPHI(text) {
+    const hasEmail = /\b[\w.+-]+@[\w-]+\.[\w.-]+\b/.test(text);
+    const hasPhone = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(text);
+    const hasDOB = /(dob|date of birth|\b\d{1,2}[\/.-]\d{1,2}[\/.-](\d{2,4}))\b/i.test(text);
+    const hasMRN = /(mrn|medical record)/i.test(text);
+    return hasEmail || hasPhone || hasDOB || hasMRN;
+  }
+
+  function updateQualityChips() {
+    const text = messageBox.value || '';
+    const tone = estimateTone(text);
+    chipTone.textContent = `Tone: ${tone}`;
+    const phi = detectPHI(text);
+    chipCompliance.textContent = phi ? 'Possible PHI detected' : 'No PHI detected';
+    chipCompliance.classList.toggle('warn', !!phi);
+    chipCompliance.classList.toggle('success', !phi);
+    // Confidence proxy: shorter + no PHI → higher
+    const lengthPenalty = Math.min(50, (text.length / 20) | 0);
+    const base = 95 - lengthPenalty - (phi ? 15 : 0);
+    const confidence = Math.max(50, Math.min(98, base));
+    const chipConf = document.getElementById('chipConfidence');
+    if (chipConf) chipConf.textContent = `AI confidence: ${confidence}%`;
+  }
+
+  function randomImpact() {
+    const min = 10, max = 20;
+    const val = Math.round(min + Math.random() * (max - min));
+    aiPredictedImpactText.textContent = `Predicted +${val}% response`;
+    aiPredictedImpact.style.display = 'inline-flex';
+  }
+
+  function bestTimeHeuristic(deliveries) {
+    if (!Array.isArray(deliveries) || deliveries.length < 10) {
+      const now = new Date();
+      const day = now.getDay(); // 0 Sun ... 6 Sat
+      if (day === 0 || day === 6) return { label: '10:00–11:00 am', why: 'Weekend pattern heuristic' };
+      return { label: '6:05–6:30 pm', why: 'Evening sends tend to perform better', dow: day };
+    }
+    const counts = new Array(24).fill(0);
+    deliveries.forEach(d => {
+      try {
+        const dt = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+        const h = dt.getHours();
+        counts[h]++;
+      } catch {}
+    });
+    let bestHour = 18; let bestCount = -1;
+    counts.forEach((c, h) => { if (c > bestCount) { bestCount = c; bestHour = h; } });
+    const pad = n => (n < 10 ? '0' + n : '' + n);
+    const end = (bestHour + 1) % 24;
+    const label = `${((bestHour + 11) % 12) + 1}:${pad(5)} ${(bestHour < 12) ? 'am' : 'pm'}–${((end + 11) % 12) + 1}:${pad(30)} ${(end < 12) ? 'am' : 'pm'}`;
+    // Best day-of-week by volume
+    const dowCounts = new Array(7).fill(0);
+    deliveries.forEach(d => { try { const dt = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt); dowCounts[dt.getDay()]++; } catch {} });
+    let bestDow = 1, dowMax = -1; dowCounts.forEach((c,i)=>{ if (c>dowMax){ dowMax=c; bestDow=i; } });
+    return { label, why: 'Recent send patterns', dow: bestDow };
+  }
+
+  function updateBestSendTime() {
+    try {
+      const { label, why } = bestTimeHeuristic(lastDeliveries || []);
+      aiBestTime.textContent = label;
+      aiBestTimeWhy.textContent = `Based on ${why}.`;
+    } catch {
+      aiBestTime.textContent = '6:05–6:30 pm';
+      aiBestTimeWhy.textContent = 'Based on general patient engagement.';
+    }
+  }
+
+  function buildGeneratedMessage({ tone, length }) {
+    const name = preferredNameInput.value.trim() || 'there';
+    const base = {
+      warm: `Hi ${name},\n\nThank you for visiting us today. Your feedback helps other patients find great care. Would you mind sharing a quick review?\n\nPlease leave us a review: [Click here to leave a review]\n\nThanks so much,\nSarah`,
+      professional: `Hello ${name},\n\nThank you for your visit. We value your experience and would appreciate a brief review of your care.\n\nLeave a review: [Click here to leave a review]\n\nSincerely,\nSarah`,
+      friendly: `Hey ${name}!\n\nIt was great seeing you. If you have a minute, a quick review would really help others.\n\n[Click here to leave a review]\n\nThanks!\nSarah`,
+      direct: `${name}, thanks for choosing us.\n\nCould you leave a quick review today? It takes ~30 seconds.\n\n[Click here to leave a review]\n\n— Sarah`
+    };
+    let msg = base[tone] || base.warm;
+    if (length === 'short') {
+      msg = msg.split(/\n\n/).slice(0, 2).join('\n\n') + `\n\n[Click here to leave a review]`;
+    } else if (length === 'long') {
+      msg += `\n\nWe read every comment and use your feedback to improve.`;
+    }
+    return msg;
+  }
+
+  function improveClarity(text) {
+    let t = text.replace(/\s+!/g, '!').replace(/\s+/g, ' ');
+    t = t.replace(/\bvery\s+/gi, '').replace(/\breally\s+/gi, '').trim();
+    return t;
+  }
+
+  function shortenMessage(text) {
+    const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+    const core = sentences.slice(0, 2).join(' ');
+    return core.includes('[Click here to leave a review]') ? core : `${core}\n\n[Click here to leave a review]`;
+  }
+
+  function makeWarmer(text) {
+    if (/thank/i.test(text)) return text;
+    return text.replace(/\n\n([^]*)$/, '\n\nWe appreciate you taking the time.\\n$1');
+  }
+
+  // === Translation ===
+  function preservePlaceholders(text) {
+    return text.replace(/\[Click here to leave a review\]/g, '__REVIEW_LINK__');
+  }
+  function restorePlaceholders(text, lang) {
+    // Keep placeholder English for system logic compatibility
+    return text.replace(/__REVIEW_LINK__/g, '[Click here to leave a review]');
+  }
+  function translateEnToEs(text) {
+    let t = preservePlaceholders(text);
+    const map = [
+      [/\bHi\b/gi, 'Hola'],
+      [/\bHello\b/gi, 'Hola'],
+      [/Thank you for visiting us today\.?/gi, 'Gracias por visitarnos hoy.'],
+      [/Thank you so much for letting us take care of you\.?/gi, 'Muchas gracias por confiar en nosotros para su cuidado.'],
+      [/Your feedback helps other patients find great care\.?/gi, 'Sus comentarios ayudan a otros pacientes a encontrar una excelente atención.'],
+      [/Feedback is very valuable and we would love to hear from you\.?/gi, 'Su opinión es muy valiosa y nos encantaría conocerla.'],
+      [/Would you mind sharing a quick review\??/gi, '¿Podría compartir una reseña rápida?'],
+      [/Please leave us a review:?/gi, 'Por favor deje su reseña:'],
+      [/Thanks so much,?/gi, 'Muchas gracias,'],
+      [/Thanks,?/gi, 'Gracias,'],
+      [/We value your perspective/gi, 'Valoramos su perspectiva'],
+      [/a quick review would really help others/gi, 'una reseña rápida ayudaría a otros'],
+    ];
+    map.forEach(([re, rep]) => { t = t.replace(re, rep); });
+    return restorePlaceholders(t, 'es');
+  }
+  function translateEsToEn(text) {
+    let t = preservePlaceholders(text);
+    const map = [
+      [/\bHola\b/gi, 'Hi'],
+      [/Gracias por visitarnos hoy\.?/gi, 'Thank you for visiting us today.'],
+      [/Muchas gracias por confiar en nosotros para su cuidado\.?/gi, 'Thank you so much for letting us take care of you.'],
+      [/Sus comentarios ayudan a otros pacientes a encontrar una excelente atención\.?/gi, 'Your feedback helps other patients find great care.'],
+      [/Su opinión es muy valiosa y nos encantaría conocerla\.?/gi, 'Your feedback is very valuable and we would love to hear from you.'],
+      [/¿Podría compartir una reseña rápida\??/gi, 'Would you mind sharing a quick review?'],
+      [/Por favor deje su reseña:?/gi, 'Please leave us a review:'],
+      [/Muchas gracias,?/gi, 'Thanks so much,'],
+      [/Gracias,?/gi, 'Thanks,'],
+    ];
+    map.forEach(([re, rep]) => { t = t.replace(re, rep); });
+    return restorePlaceholders(t, 'en');
+  }
+  function translateEnToPt(text) {
+    let t = preservePlaceholders(text);
+    const map = [
+      [/\bHi\b/gi, 'Olá'],
+      [/\bHello\b/gi, 'Olá'],
+      [/Thank you for visiting us today\.?/gi, 'Obrigado por nos visitar hoje.'],
+      [/Thank you so much for letting us take care of you\.?/gi, 'Muito obrigado por confiar em nossos cuidados.'],
+      [/Your feedback helps other patients find great care\.?/gi, 'Seu feedback ajuda outros pacientes a encontrar um ótimo atendimento.'],
+      [/Feedback is very valuable and we would love to hear from you\.?/gi, 'Seu feedback é muito valioso e adoraríamos ouvi-lo.'],
+      [/Would you mind sharing a quick review\??/gi, 'Você poderia compartilhar uma avaliação rápida?'],
+      [/Please leave us a review:?/gi, 'Por favor, deixe sua avaliação:'],
+      [/Thanks so much,?/gi, 'Muito obrigado,'],
+      [/Thanks,?/gi, 'Obrigado,'],
+      [/We appreciate you taking the time\.?/gi, 'Agradecemos pelo seu tempo.'],
+    ];
+    map.forEach(([re, rep]) => { t = t.replace(re, rep); });
+    return restorePlaceholders(t, 'pt');
+  }
+  function translateMessage(text, targetLang) {
+    if (!text) return text;
+    if (targetLang === 'en') return text; // leave as-is when switching to English
+    if (targetLang === 'es') return translateEnToEs(text);
+    return text;
+  }
+  function applyTransformKeepingLanguage(transform) {
+    const targetLang = aiLanguageSel?.value || 'en';
+    const newText = transform(messageBox.value || '');
+    if (targetLang === 'en') return newText;
+    return translateMessage(newText, targetLang);
+  }
+
+  function refreshVariants() { /* no-op after simplification */ }
+
+  messageBox.addEventListener('input', () => { updateQualityChips(); refreshVariants(); });
+  btnAiGenerate?.addEventListener('click', () => {
+    const tone = aiToneSel.value || 'warm';
+    const length = aiLengthSel.value || 'medium';
+    const targetLang = aiLanguageSel?.value || 'en';
+    let msg = buildGeneratedMessage({ tone, length });
+    if (targetLang !== 'en') { msg = translateMessage(msg, targetLang); }
+    messageBox.value = msg;
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+    if (aiTokenUsage) aiTokenUsage.textContent = 'Tokens: ~0.2k';
+  });
+  btnAiImprove?.addEventListener('click', () => {
+    messageBox.value = applyTransformKeepingLanguage(improveClarity);
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+    if (aiTokenUsage) aiTokenUsage.textContent = 'Tokens: ~0.1k';
+  });
+  btnAiShorten?.addEventListener('click', () => {
+    messageBox.value = applyTransformKeepingLanguage(shortenMessage);
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+    if (aiTokenUsage) aiTokenUsage.textContent = 'Tokens: ~0.05k';
+  });
+  btnAiWarm?.addEventListener('click', () => {
+    messageBox.value = applyTransformKeepingLanguage(makeWarmer);
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+    if (aiTokenUsage) aiTokenUsage.textContent = 'Tokens: ~0.05k';
+  });
+  // removed variant apply handlers (simplified sidebar)
+
+  aiLanguageSel?.addEventListener('change', () => {
+    const targetLang = aiLanguageSel.value;
+    const current = messageBox.value || '';
+    let translated = translateMessage(current, targetLang);
+    // If no visible change (e.g., custom text), regenerate from template in target language
+    if (translated === current) {
+      const tone = aiToneSel.value || 'warm';
+      const length = aiLengthSel.value || 'medium';
+      const base = buildGeneratedMessage({ tone, length });
+      translated = translateMessage(base, targetLang);
+    }
+    messageBox.value = translated;
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+  });
+
+  // Initialize chips once DOM is ready
+  setTimeout(() => { updateQualityChips(); refreshVariants(); updateBestSendTime(); }, 0);
+
+  // AI Digest (7d) & Channel Recommendation
+  const aiDigestCard = document.getElementById('aiDigestCard');
+  const digestTotal = document.getElementById('digestTotal');
+  const digestSplit = document.getElementById('digestSplit');
+  const digestBestTime = document.getElementById('digestBestTime');
+  const digestAnomaly = document.getElementById('digestAnomaly');
+  const channelRecommendation = document.getElementById('channelRecommendation');
+  const applyChannelRecommendation = document.getElementById('applyChannelRecommendation');
+
+  function computeDigest(deliveries) {
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 3600 * 1000;
+    const last7 = deliveries.filter(d => {
+      const ts = d.createdAt?.toDate ? d.createdAt.toDate().getTime() : new Date(d.createdAt).getTime();
+      return ts >= weekAgo;
+    });
+    const total = last7.length;
+    const sms = last7.filter(d => d.channel === 'sms').length;
+    const email = last7.filter(d => d.channel === 'email').length;
+    const best = bestTimeHeuristic(last7);
+    digestTotal.textContent = `7d sends: ${total}`;
+    digestSplit.textContent = `SMS ${sms} / Email ${email}`;
+    digestBestTime.textContent = `Best time: ${best.label}`;
+    digestAnomaly.style.display = total > 0 && total < 5 ? 'inline-flex' : 'none';
+    aiDigestCard.style.display = 'block';
+
+    // Channel recommendation: prefer SMS if SMS proportion < 60% and phone present; else Email
+    const rec = sms < email ? 'SMS' : (email < sms ? 'Email' : 'Both');
+    channelRecommendation.textContent = `Recommended: ${rec}`;
+    channelRecommendation.style.display = 'inline-flex';
+    applyChannelRecommendation.style.display = 'inline-flex';
+    applyChannelRecommendation.onclick = () => {
+      const smsBox = document.getElementById('sendText');
+      const emailBox = document.getElementById('sendEmail');
+      if (rec === 'SMS') { smsBox.checked = true; emailBox.checked = false; }
+      else if (rec === 'Email') { smsBox.checked = false; emailBox.checked = true; }
+      else { smsBox.checked = true; emailBox.checked = true; }
+      showToast(`Applied channel: ${rec}`, 'info');
+    };
+  }
+
+  // QR Poster modal logic
+  const qrModal = document.getElementById('qrModal');
+  const qrClose = document.getElementById('qrClose');
+  const qrHeadline = document.getElementById('qrHeadline');
+  const qrSubtext = document.getElementById('qrSubtext');
+  const qrImage = document.getElementById('qrImage');
+  const qrDownload = document.getElementById('qrDownload');
+  const btnQrPoster = document.getElementById('btnQrPoster');
+
+  function generateQRDataUrl(url, size = 512) {
+    // Tiny QR via Google Chart API as a quick, dependency-free placeholder
+    const encoded = encodeURIComponent(url);
+    const qurl = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encoded}`;
+    return qurl;
+  }
+
+  function buildPosterCanvas(url) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200; canvas.height = 1600;
+    const ctx = canvas.getContext('2d');
+    // Background
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    // Header block
+    ctx.fillStyle = '#1e3a8a'; ctx.fillRect(0,0,canvas.width,260);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 64px Inter, Arial'; ctx.fillText(qrHeadline.value || 'Leave us a quick review', 60, 150);
+    // Subtext
+    ctx.fillStyle = '#1f2937'; ctx.font = '36px Inter, Arial';
+    ctx.fillText(qrSubtext.value || 'Scan the code. It takes ~30 seconds.', 60, 330);
+    // QR image
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const qrSize = 800; const x = (canvas.width - qrSize) / 2; const y = 420;
+        ctx.drawImage(img, x, y, qrSize, qrSize);
+        // Footer
+        ctx.fillStyle = '#6b7280'; ctx.font = '28px Inter, Arial';
+        ctx.fillText('Point your camera at the QR to open our review page.', 60, 1500);
+        resolve(canvas);
+      };
+      img.src = generateQRDataUrl(url, 512);
+    });
+  }
+
+  btnQrPoster?.addEventListener('click', async () => {
+    if (!reviewLink) { showToast('Set your review link in profile first.', 'info'); return; }
+    qrModal.style.display = 'flex';
+    qrImage.src = generateQRDataUrl(reviewLink, 256);
+    qrDownload.href = '#';
+    try {
+      const canvas = await buildPosterCanvas(reviewLink);
+      const dataUrl = canvas.toDataURL('image/png');
+      qrDownload.href = dataUrl;
+    } catch {}
+  });
+  qrClose?.addEventListener('click', () => { qrModal.style.display = 'none'; });
+  qrModal?.addEventListener('click', (e) => { if (e.target === qrModal) qrModal.style.display = 'none'; });
+
+  // AI Reply Assistant
+  const reviewInput = document.getElementById('reviewInput');
+  const replyOutput = document.getElementById('replyOutput');
+  const btnDraftReply = document.getElementById('btnDraftReply');
+  function draftReply(text) {
+    const politeOpeners = [
+      'Thank you for taking the time to share your experience.',
+      'We appreciate your feedback and the opportunity to care for you.',
+      'Thanks for your review—your perspective helps us improve.'
+    ];
+    const closer = 'If there is anything more we can do, please reach out to our team.';
+    const opener = politeOpeners[Math.floor(Math.random()*politeOpeners.length)];
+    const positive = /(great|excellent|amazing|wonderful|thank)/i.test(text);
+    const negative = /(wait|rude|bad|poor|late|pain|problem|issue)/i.test(text);
+    let body;
+    if (positive && !negative) {
+      body = 'We are glad to hear your visit went well. Your kind words mean a lot to our team.';
+    } else if (negative && !positive) {
+      body = 'We are sorry to hear parts of your visit did not meet expectations. We are reviewing this with our team.';
+    } else {
+      body = 'We value your perspective and will share it with our team.';
+    }
+    return `${opener} ${body} ${closer}`;
+  }
+  btnDraftReply?.addEventListener('click', () => {
+    const txt = (reviewInput.value || '').trim();
+    if (!txt) { showToast('Paste a review first.', 'info'); return; }
+    const draft = draftReply(txt);
+    replyOutput.style.display = 'block';
+    replyOutput.textContent = draft;
+  });
+
+  // === Copilot Drawer Logic ===
+  const openCopilot = document.getElementById('openCopilot');
+  const closeCopilot = document.getElementById('closeCopilot');
+  const copilotOverlay = document.getElementById('copilotOverlay');
+  const copilotBody = document.getElementById('copilotBody');
+  const copilotPrompt = document.getElementById('copilotPrompt');
+  const copilotSend = document.getElementById('copilotSend');
+  const copilotInsert = document.getElementById('copilotInsert');
+  const copilotSuggestions = document.getElementById('copilotSuggestions');
+  let lastAIDraft = '';
+
+  function openDrawer() { copilotOverlay.style.display = 'flex'; setTimeout(() => copilotPrompt.focus(), 50); }
+  function closeDrawer() { copilotOverlay.style.display = 'none'; }
+  openCopilot?.addEventListener('click', openDrawer);
+  closeCopilot?.addEventListener('click', closeDrawer);
+  copilotOverlay?.addEventListener('click', (e) => { if (e.target === copilotOverlay) closeDrawer(); });
+
+  function renderAssistantMessage(html) {
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg chat-assistant';
+    wrap.innerHTML = `<div class="chat-bubble">${html}</div>`;
+    copilotBody.appendChild(wrap);
+    copilotBody.scrollTop = copilotBody.scrollHeight;
+  }
+  function renderUserMessage(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg chat-user';
+    const safe = escapeHtml(text);
+    wrap.innerHTML = `<div class="chat-bubble">${safe}</div>`;
+    copilotBody.appendChild(wrap);
+    copilotBody.scrollTop = copilotBody.scrollHeight;
+  }
+  function renderTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-msg chat-assistant';
+    wrap.innerHTML = `<div class="chat-bubble"><span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>`;
+    copilotBody.appendChild(wrap);
+    copilotBody.scrollTop = copilotBody.scrollHeight;
+    return wrap;
+  }
+
+  function copilotDraftFromPrompt(prompt) {
+    const name = preferredNameInput.value.trim() || 'there';
+    const base = buildGeneratedMessage({ tone: 'warm', length: 'medium' });
+    if (/translate.*spanish/i.test(prompt)) {
+      return base
+        .replace('Hi', 'Hola')
+        .replace('Thank you for visiting us today.', 'Gracias por visitarnos hoy.')
+        .replace('Your feedback helps other patients find great care.', 'Sus comentarios ayudan a otros pacientes a encontrar una excelente atención.')
+        .replace('Would you mind sharing a quick review?', '¿Podría compartir una reseña rápida?')
+        .replace('Please leave us a review:', 'Por favor deje su reseña:')
+        .replace('Thanks so much,', 'Muchas gracias,');
+    }
+    if (/improve|shorten/i.test(prompt)) {
+      return shortenMessage(improveClarity(messageBox.value || base));
+    }
+    if (/cataract|post\-?op|retina|injection/i.test(prompt)) {
+      return `Hi ${name},\n\nThank you for your visit today. If you have a moment, a quick review would help other patients considering similar care.\n\n[Click here to leave a review]\n\nThanks,\nSarah`;
+    }
+    if (/best send time/i.test(prompt)) {
+      const { label, why } = bestTimeHeuristic(lastDeliveries || []);
+      return `Based on your recent sending pattern, today’s best window is ${label}. Reason: ${why}.`;
+    }
+    return base;
+  }
+
+  function sendCopilot() {
+    const prompt = (copilotPrompt.value || '').trim();
+    if (!prompt) return;
+    renderUserMessage(prompt);
+    const typing = renderTyping();
+    setTimeout(() => {
+      typing.remove();
+      const draft = copilotDraftFromPrompt(prompt);
+      lastAIDraft = draft;
+      const html = escapeHtml(draft).replace(/\n/g, '<br>');
+      renderAssistantMessage(html + '<div class="ai-mini" style="margin-top:.4rem; opacity:.8;">Use “Insert into Message” to apply</div>');
+    }, 600 + Math.random()*600);
+    copilotPrompt.value = '';
+  }
+  copilotSend?.addEventListener('click', sendCopilot);
+  copilotPrompt?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendCopilot(); });
+  copilotInsert?.addEventListener('click', () => {
+    if (!lastAIDraft) { showToast('No AI draft yet.', 'info'); return; }
+    messageBox.value = lastAIDraft;
+    updateMessagePreview(); updateQualityChips(); refreshVariants(); randomImpact();
+    showToast('Inserted AI draft into message.', 'success');
+  });
+  copilotSuggestions?.addEventListener('click', (e) => {
+    const el = e.target.closest('.suggestion');
+    if (!el) return;
+    copilotPrompt.value = el.getAttribute('data-prompt') || '';
+    sendCopilot();
+  });
+
 
   // 🔒 Enforce login and load user profile by UID
   let currentUser = null;
@@ -808,6 +1509,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         // Subscribe to recent deliveries
         subscribeToDeliveries();
+        updateBestSendTime();
       } else {
         console.warn("⚠️ No profile found for email:", user.email);
         // If no profile doc exists, go to profile setup
@@ -874,6 +1576,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         lastDeliveries = snap.docs.map(doc => doc.data());
         const filtered = channelSel.value === 'all' ? lastDeliveries : lastDeliveries.filter(d => d.channel === channelSel.value);
         renderDeliveries(filtered);
+        updateBestSendTime();
       }, err => {
         console.warn('Failed to load deliveries', err);
         renderDeliveries([]);

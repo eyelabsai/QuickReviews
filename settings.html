@@ -198,8 +198,6 @@
         const updates = {};
         if (senderName) updates.senderName = senderName; else updates.senderName = firebase.firestore.FieldValue.delete();
         if (emailSubject) updates.emailSubject = emailSubject; else updates.emailSubject = firebase.firestore.FieldValue.delete();
-        // Store a friendly sender display that will be used as Friendly Name in From header
-        if (senderName) updates.senderDisplay = senderName; else updates.senderDisplay = firebase.firestore.FieldValue.delete();
         if (defaultMessage) updates.defaultMessage = defaultMessage; else updates.defaultMessage = firebase.firestore.FieldValue.delete();
         if (reviewLink) updates.reviewLink = reviewLink; else updates.reviewLink = firebase.firestore.FieldValue.delete();
         if (practiceName) updates.practiceName = practiceName; else updates.practiceName = firebase.firestore.FieldValue.delete();
