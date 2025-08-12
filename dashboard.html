@@ -188,7 +188,7 @@
   
   textarea {
     resize: vertical;
-    min-height: 120px;
+    min-height: 180px;
   }
   
   /* Buttons */
@@ -538,7 +538,7 @@
 
               <div class="form-group full">
                 <label for="message">Custom Message</label>
-                <textarea id="message" name="message" rows="6" placeholder="Your message will go here..."></textarea>
+                <textarea id="message" name="message" rows="8" placeholder="Your message will go here..."></textarea>
               </div>
 
               <div class="form-group full">
@@ -1690,14 +1690,10 @@ const safeHtml = htmlWithLinks
   })
   .replace(/\n/g, "<br>");
 
+const friendlyName = (senderDisplay || senderName || '').trim();
 const mailPayload = {
   to: email,
-  from: (function(){
-    try {
-      const friendly = (senderDisplay || senderName || 'Feedback');
-      return `${friendly} <feedback@ezreviews.app>`;
-    } catch { return "feedback@ezreviews.app"; }
-  })(),
+  from: friendlyName ? `${friendlyName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
   message: {
     subject: `We'd love your feedback, ${preferredName || "friend"}!`,
     html: safeHtml

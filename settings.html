@@ -36,6 +36,7 @@
     .message.success{background:#f0fdf4;color:var(--success);border:1px solid #bbf7d0}
     .logo-preview{margin-top:.6rem}
     .logo-preview img{max-height:90px;max-width:260px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .hint-example{margin-top:.6rem;padding:.6rem .75rem;border-radius:10px;background:#f9fafb;border:1px solid var(--border);color:var(--text-secondary);font-size:.92rem;line-height:1.35;white-space:normal;word-break:break-word}
     @media (max-width: 980px){.grid{grid-template-columns:1fr}}
     @media (max-width: 640px){.container{padding:0 1rem}.btn-row{justify-content:stretch}.btn-primary{width:100%}}
   </style>
@@ -79,7 +80,12 @@
           <div class="form-group">
             <label for="defaultMessage">Default message</label>
             <textarea id="defaultMessage" placeholder="Your default message template. Use {name} for the patient's name. Include [Click here to leave a review] to show the link."></textarea>
-            <small>Example: Hi {name}! We hope you enjoyed your visit... Thanks! Sarah</small>
+            <div class="hint-example">Example:<br>
+              Hi {name}! We hope you enjoyed your visit today. Your feedback is very valuable and we would love to hear from you.<br><br>
+              Please leave us a review: [Click here to leave a review]<br><br>
+              Thanks!<br>
+              Sarah
+            </div>
           </div>
         </div>
         <div class="grid">
