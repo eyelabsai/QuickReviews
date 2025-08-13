@@ -1446,6 +1446,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
   let lastDeliveries = [];
   // Settings pulled from profile
   let userEmailSubject = null;
+  let profileSenderName = null; // e.g., "Your team"
+  let profileSenderDisplay = null; // Friendly From name
 
   firebase.auth().onAuthStateChanged(async (user) => {
     if (!user) {
@@ -1477,6 +1479,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         console.log("✅ Review link loaded:", reviewLink);
 
         const senderName = data.senderName || 'Your team';
+        profileSenderName = senderName;
         const fullName = data.fullName || data.fullname || user.email;
         document.getElementById("headerText").textContent = `Send a review request as ${senderName}`;
 
@@ -1498,7 +1501,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         // Load default message/subject if provided
         const defaultMessage = data.defaultMessage || null;
         userEmailSubject = data.emailSubject || null;
-        const senderDisplay = data.senderDisplay || data.senderName || null;
+        profileSenderDisplay = data.senderDisplay || data.senderName || null;
         if (defaultMessage) {
           const name = preferredNameInput.value.trim() || "[preferred name]";
           messageBox.value = defaultMessage.replaceAll('{name}', name);
@@ -1690,7 +1693,7 @@ const safeHtml = htmlWithLinks
   })
   .replace(/\n/g, "<br>");
 
-const friendlyName = (senderDisplay || senderName || '').trim();
+const friendlyName = (profileSenderDisplay || profileSenderName || '').trim();
 const mailPayload = {
   to: email,
   from: friendlyName ? `${friendlyName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
