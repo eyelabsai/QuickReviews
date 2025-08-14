@@ -16,6 +16,7 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email;
 
       // Allow owner to update limited fields; email must stay the same
+      // Also allow updates to documents where the email matches (for legacy username-based docs)
       allow update: if isSignedIn()
         && resource.data.email == request.auth.token.email
         && request.resource.data.keys().hasOnly(['email', 'fullName', 'reviewLink', 'needsPasswordChange', 'practiceName', 'logoUrl', 'senderName', 'emailSubject', 'defaultMessage', 'username', 'usernameLower'])
