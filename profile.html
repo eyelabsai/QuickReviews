@@ -409,6 +409,21 @@
 
     let userDocRef = null;
 
+    // Normalize review link to include scheme so the required url field passes validation
+    (function attachReviewLinkNormalizer(){
+      try {
+        const rl = document.getElementById('reviewLink');
+        if (rl) {
+          rl.addEventListener('blur', function(){
+            const val = (rl.value || '').trim();
+            if (val && !/^https?:\/\//i.test(val)) {
+              rl.value = `https://${val}`;
+            }
+          });
+        }
+      } catch (_) {}
+    })();
+
     // Handle file preview
     document.getElementById('logoFile').addEventListener('change', function(e) {
       const file = e.target.files[0];
@@ -490,7 +505,8 @@
       info.style.display = 'none';
 
       const fullName = document.getElementById('fullName').value.trim();
-      const reviewLink = document.getElementById('reviewLink').value.trim();
+      const reviewLinkRaw = document.getElementById('reviewLink').value.trim();
+      const reviewLink = reviewLinkRaw ? (/^https?:\/\//i.test(reviewLinkRaw) ? reviewLinkRaw : `https://${reviewLinkRaw}`) : '';
       const practiceName = document.getElementById('practiceName').value.trim();
       const logoFile = document.getElementById('logoFile').files[0];
 

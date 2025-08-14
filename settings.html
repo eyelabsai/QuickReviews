@@ -146,11 +146,27 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    try { db.settings({ experimentalAutoDetectLongPolling: true }); } catch (e) {}
     const storage = firebase.storage();
 
     let userDocRef = null; let currentUser = null; let existingLogoUrl = null;
 
     document.getElementById('backBtn').addEventListener('click', () => { window.location.href = 'dashboard.html'; });
+
+    // Normalize review link to include scheme so browser URL validation passes
+    (function attachReviewLinkNormalizer(){
+      try {
+        const rl = document.getElementById('reviewLink');
+        if (rl) {
+          rl.addEventListener('blur', function(){
+            const val = (rl.value || '').trim();
+            if (val && !/^https?:\/\//i.test(val)) {
+              rl.value = `https://${val}`;
+            }
+          });
+        }
+      } catch (_) {}
+    })();
 
     firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) { window.location.href = 'index.html'; return; }
@@ -188,7 +204,8 @@
         const senderName = document.getElementById('senderName').value.trim();
         const emailSubject = document.getElementById('emailSubject').value.trim();
         const defaultMessage = document.getElementById('defaultMessage').value.trim();
-        const reviewLink = document.getElementById('reviewLink').value.trim();
+        const reviewLinkRaw = document.getElementById('reviewLink').value.trim();
+        const reviewLink = reviewLinkRaw ? (/^https?:\/\//i.test(reviewLinkRaw) ? reviewLinkRaw : `https://${reviewLinkRaw}`) : '';
         const practiceName = document.getElementById('practiceName').value.trim();
         const logoFile = document.getElementById('logoFile').files[0];
 
