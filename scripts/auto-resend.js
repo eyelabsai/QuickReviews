@@ -38,20 +38,49 @@ async function checkAndResendExpiredLinks() {
       try {
         console.log(`📤 Resending ${tracking.channel} to ${tracking.to} for patient ${tracking.patientFullName}`);
         
-        // Resend the message
+        // Generate new tracking URL for the resend
+        const trackingUrl = `https://quickreviews-1.web.app/tracking.html?tracking=${doc.id}&link=${encodeURIComponent(tracking.reviewLink)}`;
+        
+        // Resend the message with updated tracking URL
         if (tracking.channel === 'sms') {
+          // Replace any existing tracking URLs or placeholders with new tracking URL
+          let resendMessage = tracking.message;
+          if (resendMessage.includes('[TRACKING_URL]')) {
+            resendMessage = resendMessage.replace('[TRACKING_URL]', trackingUrl);
+          } else if (resendMessage.includes('tracking.html?tracking=')) {
+            // Replace existing tracking URL
+            resendMessage = resendMessage.replace(/https?:\/\/[^\s]+\/tracking\.html\?tracking=[^\s]+/, trackingUrl);
+          } else {
+            // Append tracking URL if not present
+            resendMessage = `${resendMessage}\n\nPlease leave us a review: ${trackingUrl}`;
+          }
+          
           const smsPayload = {
             to: tracking.to,
-            body: tracking.message
+            body: resendMessage
           };
           await db.collection("messages").add(smsPayload);
         } else if (tracking.channel === 'email') {
+          // For email, use the stored finalHtml if available, otherwise build from message
+          let emailHtml = tracking.finalHtml;
+          if (!emailHtml) {
+            emailHtml = tracking.message.replace(/\n/g, '<br>');
+          }
+          
+          // Replace tracking URLs in HTML
+          if (emailHtml.includes('tracking.html?tracking=')) {
+            emailHtml = emailHtml.replace(/href="[^"]*tracking\.html\?tracking=[^"]*"/g, `href="${trackingUrl}"`);
+          } else {
+            // Add tracking link if not present
+            emailHtml += `<br><br><a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+          }
+          
           const mailPayload = {
             to: tracking.to,
             from: 'feedback@ezreviews.app',
             message: {
               subject: `We'd love your feedback! (Reminder)`,
-              html: tracking.message.replace(/\n/g, '<br>')
+              html: emailHtml
             }
           };
           await db.collection("mail").add(mailPayload);
