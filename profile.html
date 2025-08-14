@@ -449,7 +449,9 @@
       } else {
         // Always use the Firebase Auth UID for the document reference
         // This ensures we're updating the correct document according to Firestore rules
-        userDocRef = db.collection('users').doc(user.uid);
+        $1
+        // Ensure UID doc exists with email so create rule passes
+        try { await userDocRef.set({ email: user.email }, { merge: true }); } catch (e) { console.warn('UID profile bootstrap failed', e); }
         const data = qs.docs[0].data();
         // If no username yet, prompt to choose one
         if (!data.username) {
@@ -521,7 +523,10 @@
           if (uname) { updates.username = uname; updates.usernameLower = uname; }
         }
 
-        await userDocRef.update(updates);
+        // Ensure the document exists before updating
+        console.log('🔧 Saving profile to document:', userDocRef.path);
+        console.log('🔧 Updates:', updates);
+        await userDocRef.set(updates, { merge: true });
         info.textContent = 'Profile saved successfully! Redirecting to dashboard...';
         info.style.display = 'block';
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
