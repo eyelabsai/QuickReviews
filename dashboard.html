@@ -922,6 +922,20 @@ function updateMessagePreview() {
     }
   }
 
+  // Determine the correct public host for links (avoid localhost in outgoing emails/SMS)
+  function getPublicHost() {
+    try {
+      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      // Allow override via global if needed, e.g., window.PUBLIC_HOST = 'https://yourdomain.com'
+      const configured = (typeof window !== 'undefined' && window.PUBLIC_HOST) ? window.PUBLIC_HOST : null;
+      if (configured) return configured;
+      if (isLocal) return 'https://ezreview-ee8f0.web.app';
+      return window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  }
+
   // Replace placeholder with a unique marker that won't be escaped
   let previewText = baseText;
   if (fiveStarPreviewLink) {
@@ -1813,7 +1827,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
                 });
                 
                 // Generate tracking URL
-                const trackingUrl = `${window.location.origin}/tracking.html?tracking=${trackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
+                const trackingUrl = `${getPublicHost()}/tracking.html?tracking=${trackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
                 
                 // Replace [TRACKING_URL] placeholder with actual tracking URL
                 finalSmsMessage = messageForSms.replace('[TRACKING_URL]', trackingUrl);
@@ -1896,7 +1910,7 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
                 });
                 
                 // Generate tracking URL
-                trackingUrl = `${window.location.origin}/tracking.html?tracking=${emailTrackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
+                trackingUrl = `${getPublicHost()}/tracking.html?tracking=${emailTrackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
                 
                 console.log("✅ Created email tracking record:", emailTrackingRef.id);
                 console.log("🔗 Generated email tracking URL:", trackingUrl);
