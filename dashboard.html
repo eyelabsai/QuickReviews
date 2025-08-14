@@ -1720,24 +1720,24 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         // Build message variants from the user's template
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
-        
-        // Process message template to use preferred name
-        let messageTemplate = message;
-        if (preferredName) {
-          messageTemplate = messageTemplate.replace(/^Hi\s+/i, `Hi ${preferredName}, `);
-          messageTemplate = messageTemplate.replace(/^Hello\s+/i, `Hello ${preferredName}, `);
-          messageTemplate = messageTemplate.replace(/^Hey\s+/i, `Hey ${preferredName}! `);
-        } else {
-          // Fallback to full name if no preferred name
-          const fullName = document.getElementById('fullName').value.trim();
-          if (fullName) {
-            messageTemplate = messageTemplate.replace(/^Hi\s+/i, `Hi ${fullName}, `);
-            messageTemplate = messageTemplate.replace(/^Hello\s+/i, `Hello ${fullName}, `);
-            messageTemplate = messageTemplate.replace(/^Hey\s+/i, `Hey ${fullName}! `);
+        // Avoid duplicating names: only inject greeting name if no placeholder tokens are present
+        const hasNamePlaceholder = messageTemplate.includes('{name}') || messageTemplate.includes('[preferred name]') || messageTemplate.includes('[Preferred name]') || messageTemplate.includes('[Preferred Name]') || messageTemplate.includes('[name]');
+        if (!hasNamePlaceholder) {
+          if (preferredName) {
+            messageTemplate = messageTemplate.replace(/^Hi /i, `Hi ${preferredName}, `)
+                                             .replace(/^Hello /i, `Hello ${preferredName}, `)
+                                             .replace(/^Hey /i, `Hey ${preferredName}! `);
+          } else {
+            const fullName = document.getElementById('fullName').value.trim();
+            if (fullName) {
+              messageTemplate = messageTemplate.replace(/^Hi /i, `Hi ${fullName}, `)
+                                               .replace(/^Hello /i, `Hello ${fullName}, `)
+                                               .replace(/^Hey /i, `Hey ${fullName}! `);
+            }
           }
         }
 
-        // Replace preferred name placeholder tokens if present
+        // Replace placeholder tokens directly
         const displayName = (preferredName || document.getElementById('fullName').value.trim() || 'there');
         messageTemplate = messageTemplate
           .replace('[preferred name]', displayName)
