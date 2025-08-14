@@ -107,6 +107,14 @@ async function checkAndResendExpiredLinks() {
             emailHtml = tracking.message.replace(/\n/g, '<br>');
           }
           
+          // Fix duplicated greeting names in reminder emails
+          if (emailHtml.includes('Hi ') || emailHtml.includes('Hello ') || emailHtml.includes('Hey ')) {
+            // Replace duplicated names like "Hi NAME, NAME!" with "Hi NAME!"
+            emailHtml = emailHtml.replace(/(Hi|Hello|Hey)\s+([^<>\n,]+),\s+\1\s+([^<>\n,]+)/gi, '$1 $2');
+            // Also fix single greeting with comma: "Hi NAME," -> "Hi NAME!"
+            emailHtml = emailHtml.replace(/(Hi|Hello|Hey)\s+([^<>\n,]+),/gi, '$1 $2!');
+          }
+          
           // Replace tracking URLs in HTML
           if (emailHtml.includes('tracking.html?tracking=')) {
             emailHtml = emailHtml.replace(/href="[^"]*tracking\.html\?tracking=[^"]*"/g, `href="${trackingUrl}"`);
