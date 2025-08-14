@@ -1,0 +1,37 @@
+name: Auto-Resend Review Requests
+
+on:
+  schedule:
+    # Run every minute
+    - cron: '* * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  auto-resend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        cd scripts
+        npm install
+        
+    - name: Run auto-resend
+      run: |
+        cd scripts
+        node auto-resend.js
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        FIREBASE_PROJECT_ID: ezreview-ee8f0
+        
+    - name: Log completion
+      run: echo "Auto-resend completed at $(date)"
