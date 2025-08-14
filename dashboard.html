@@ -610,7 +610,7 @@
                   <button type="button" id="btnAiShorten" class="btn btn-ghost btn-sm">Shorten</button>
                   <button type="button" id="btnAiWarm" class="btn btn-ghost btn-sm">Make warmer</button>
                   <button type="button" id="btnQrPoster" class="btn btn-ghost btn-sm">QR Poster</button>
-            <button type="button" id="btnCheckExpired" class="btn btn-ghost btn-sm">Check Expired Links</button>
+                  
                 </div>
               </div>
               <div class="ai-section">
@@ -786,6 +786,20 @@
   firebase.initializeApp(firebaseConfig);
   firebase.analytics();
   const db = firebase.firestore();
+  // Stabilize Firestore in constrained networks (avoids WebChannel/QUIC flakiness)
+  try { db.settings({ experimentalAutoDetectLongPolling: true }); } catch (e) {}
+  // Public host helper for building tracking links (works on localhost and prod)
+  function getPublicHost() {
+    try {
+      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      const configured = (typeof window !== 'undefined' && window.PUBLIC_HOST) ? window.PUBLIC_HOST : null;
+      if (configured) return configured;
+      if (isLocal) return 'https://ezreview-ee8f0.web.app';
+      return window.location.origin;
+    } catch {
+      return window.location.origin;
+    }
+  }
   // Toast helper
   function showToast(message, variant = 'success', title = '') {
     try {
@@ -922,19 +936,7 @@ function updateMessagePreview() {
     }
   }
 
-  // Determine the correct public host for links (avoid localhost in outgoing emails/SMS)
-  function getPublicHost() {
-    try {
-      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-      // Allow override via global if needed, e.g., window.PUBLIC_HOST = 'https://yourdomain.com'
-      const configured = (typeof window !== 'undefined' && window.PUBLIC_HOST) ? window.PUBLIC_HOST : null;
-      if (configured) return configured;
-      if (isLocal) return 'https://ezreview-ee8f0.web.app';
-      return window.location.origin;
-    } catch {
-      return window.location.origin;
-    }
-  }
+  // (moved getPublicHost to a shared scope above)
 
   // Replace placeholder with a unique marker that won't be escaped
   let previewText = baseText;
@@ -1341,107 +1343,11 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
     } catch {}
   });
 
-  // Add event listener for checking expired links
-  const btnCheckExpired = document.getElementById('btnCheckExpired');
-  btnCheckExpired?.addEventListener('click', checkAndResendExpiredLinks);
+  // Auto-resend is handled by backend; removed manual button
   qrClose?.addEventListener('click', () => { qrModal.style.display = 'none'; });
   qrModal?.addEventListener('click', (e) => { if (e.target === qrModal) qrModal.style.display = 'none'; });
 
-  // Review Link Tracking and Auto-Resend
-  async function checkAndResendExpiredLinks() {
-    try {
-      const now = new Date();
-      const threeDaysAgo = new Date(now.getTime() - 1 * 60 * 1000);
-      
-      // Find all unclicked review links that are older than 3 days
-      const expiredLinks = await db.collection('reviewTracking')
-        .where('clicked', '==', false)
-        .where('expiresAt', '<=', now)
-        .where('resendCount', '<', 3) // Limit to 3 resends
-        .get();
-      
-      if (expiredLinks.empty) {
-        showToast('No expired review links found to resend.', 'info');
-        return;
-      }
-      
-      let resendCount = 0;
-      for (const doc of expiredLinks.docs) {
-        const tracking = doc.data();
-        
-        try {
-          // Generate new tracking URL for the resend (reuse same tracking ID)
-          const trackingUrl = `${window.location.origin}/tracking.html?tracking=${doc.id}&link=${encodeURIComponent(tracking.reviewLink)}`;
-          
-          // Resend the message with updated tracking URL
-          if (tracking.channel === 'sms') {
-            // Replace any existing tracking URLs or placeholders with new tracking URL
-            let resendMessage = tracking.message;
-            if (resendMessage.includes('[TRACKING_URL]')) {
-              resendMessage = resendMessage.replace('[TRACKING_URL]', trackingUrl);
-            } else if (resendMessage.includes('tracking.html?tracking=')) {
-              // Replace existing tracking URL
-              resendMessage = resendMessage.replace(/https?:\/\/[^\s]+\/tracking\.html\?tracking=[^\s]+/, trackingUrl);
-            } else {
-              // Append tracking URL if not present
-              resendMessage = `${resendMessage}\n\nPlease leave us a review: ${trackingUrl}`;
-            }
-            
-            const smsPayload = {
-              to: tracking.to,
-              body: resendMessage
-            };
-            await db.collection("messages").add(smsPayload);
-          } else if (tracking.channel === 'email') {
-            // For email, use the stored finalHtml if available, otherwise build from message
-            let emailHtml = tracking.finalHtml;
-            if (!emailHtml) {
-              emailHtml = tracking.message.replace(/\n/g, '<br>');
-            }
-            
-            // Replace tracking URLs in HTML
-            if (emailHtml.includes('tracking.html?tracking=')) {
-              emailHtml = emailHtml.replace(/href="[^"]*tracking\.html\?tracking=[^"]*"/g, `href="${trackingUrl}"`);
-            } else {
-              // Add tracking link if not present
-              emailHtml += `<br><br><a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-            }
-            
-            const mailPayload = {
-              to: tracking.to,
-              message: {
-                subject: `We'd love your feedback! (Reminder)`,
-                html: emailHtml
-              }
-            };
-            await db.collection("mail").add(mailPayload);
-          }
-          
-          // Update tracking record
-          await doc.ref.update({
-            resendCount: firebase.firestore.FieldValue.increment(1),
-            lastResentAt: firebase.firestore.FieldValue.serverTimestamp(),
-            expiresAt: new Date(Date.now() + 1 * 60 * 1000) // Reset expiration
-          });
-          
-          resendCount++;
-        } catch (error) {
-          console.error('Failed to resend for tracking ID:', doc.id, error);
-        }
-      }
-      
-      showToast(`Successfully resent ${resendCount} review requests.`, 'success');
-      
-      // Refresh the deliveries display
-      if (typeof loadDeliveries === 'function') {
-        loadDeliveries();
-      }
-      
-    } catch (error) {
-      console.error('Error checking expired links:', error);
-      showToast('Failed to check expired links: ' + error.message, 'error');
-    }
-  }
+  // Removed manual expired links checker; server handles resends
 
   // AI Reply Assistant
   const reviewInput = document.getElementById('reviewInput');
@@ -1753,19 +1659,15 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         // Build message variants from the user's template
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
-        // Avoid duplicating names: only inject greeting name if no placeholder tokens are present
+        // Avoid duplicating names: replace any greeting name entirely rather than inserting
         const hasNamePlaceholder = messageTemplate.includes('{name}') || messageTemplate.includes('[preferred name]') || messageTemplate.includes('[Preferred name]') || messageTemplate.includes('[Preferred Name]') || messageTemplate.includes('[name]');
         if (!hasNamePlaceholder) {
-          if (preferredName) {
-            messageTemplate = messageTemplate.replace(/^Hi /i, `Hi ${preferredName}, `)
-                                             .replace(/^Hello /i, `Hello ${preferredName}, `)
-                                             .replace(/^Hey /i, `Hey ${preferredName}! `);
-          } else {
-            const fullName = document.getElementById('fullName').value.trim();
-            if (fullName) {
-              messageTemplate = messageTemplate.replace(/^Hi /i, `Hi ${fullName}, `)
-                                               .replace(/^Hello /i, `Hello ${fullName}, `)
-                                               .replace(/^Hey /i, `Hey ${fullName}! `);
+          const greetingName = preferredName || document.getElementById('fullName').value.trim();
+          if (greetingName) {
+            // Replace: "Hi|Hello|Hey <anything up to comma/! or newline> [optional , or !]" with desired name
+            const re = /^(Hi|Hello|Hey)\s+([^\n,!]+)([,!])?/i;
+            if (re.test(messageTemplate)) {
+              messageTemplate = messageTemplate.replace(re, (m, sal, _old, punc) => `${sal} ${greetingName}${punc || '!'}`);
             }
           }
         }
