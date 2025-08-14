@@ -88,7 +88,12 @@
 
       <div class="form-group full">
         <label for="password">Password</label>
-        <input type="password" id="password" placeholder="••••••••" required>
+        <div style="position: relative;">
+          <input type="password" id="password" placeholder="••••••••" required>
+          <button type="button" id="togglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666;">
+            👁️
+          </button>
+        </div>
       </div>
 
       <div class="form-group full">
@@ -167,6 +172,20 @@
       } catch (error) {
         errorElem.innerText = error.message;
         errorElem.style.display = "block";
+      }
+    });
+
+    // Password visibility toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const toggleBtn = document.getElementById('togglePassword');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
       }
     });
 
