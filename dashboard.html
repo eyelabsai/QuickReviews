@@ -1737,6 +1737,15 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           }
         }
 
+        // Replace preferred name placeholder tokens if present
+        const displayName = (preferredName || document.getElementById('fullName').value.trim() || 'there');
+        messageTemplate = messageTemplate
+          .replace('[preferred name]', displayName)
+          .replace('[Preferred name]', displayName)
+          .replace('[Preferred Name]', displayName)
+          .replace('{name}', displayName)
+          .replace('{Name}', displayName);
+
         // SMS: prepare message template for tracking URL replacement
         let messageForSms = messageTemplate;
         if (reviewLink) {
