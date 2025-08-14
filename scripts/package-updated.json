@@ -1,0 +1,19 @@
+{
+  "name": "quickreviews-auto-resend",
+  "version": "1.0.0",
+  "description": "Auto-resend script for expired review links",
+  "main": "auto-resend.js",
+  "scripts": {
+    "start": "node auto-resend.js",
+    "stats": "node -e \"require('./auto-resend.js').getTrackingStats().then(() => process.exit(0)).catch(() => process.exit(1))\"",
+    "resend": "node -e \"require('./auto-resend.js').checkAndResendExpiredLinks().then(() => process.exit(0)).catch(() => process.exit(1))\"",
+    "setup": "node setup-tracking.js",
+    "test": "node test-tracking-fixed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.11.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
