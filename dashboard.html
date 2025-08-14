@@ -455,6 +455,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-analytics-compat.js"></script>
+  <script src="js/review-tracking.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -609,6 +610,7 @@
                   <button type="button" id="btnAiShorten" class="btn btn-ghost btn-sm">Shorten</button>
                   <button type="button" id="btnAiWarm" class="btn btn-ghost btn-sm">Make warmer</button>
                   <button type="button" id="btnQrPoster" class="btn btn-ghost btn-sm">QR Poster</button>
+            <button type="button" id="btnCheckExpired" class="btn btn-ghost btn-sm">Check Expired Links</button>
                 </div>
               </div>
               <div class="ai-section">
@@ -904,12 +906,23 @@ function add5StarToReviewLink(reviewLink) {
 messageBox.addEventListener("input", updateMessagePreview);
 
 function updateMessagePreview() {
-  let previewText = messageBox.value;
+  // Build an effective preview message that mirrors send-time logic
+  const fiveStarPreviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : null;
+  let baseText = messageBox.value;
 
-  // First, replace the placeholder with a unique marker that won't be escaped
-  if (reviewLink) {
-    previewText = previewText.replace(/\[Click here to leave a review\]/g, 
-      `___REVIEW_LINK_PLACEHOLDER___`);
+  // If user hasn't included the placeholder or a direct URL, append the friendly link line
+  if (fiveStarPreviewLink) {
+    const hasPlaceholder = baseText.includes('[Click here to leave a review]');
+    const hasUrl = baseText.includes(fiveStarPreviewLink) || baseText.includes(reviewLink);
+    if (!hasPlaceholder && !hasUrl) {
+      baseText = `${baseText}\n\nPlease leave us a review: [Click here to leave a review]`;
+    }
+  }
+
+  // Replace placeholder with a unique marker that won't be escaped
+  let previewText = baseText;
+  if (fiveStarPreviewLink) {
+    previewText = previewText.replace(/\[Click here to leave a review\]/g, '___REVIEW_LINK_PLACEHOLDER___');
   }
 
   // Now escape the HTML for the rest of the content
@@ -926,9 +939,9 @@ function updateMessagePreview() {
     }
   });
 
-  // Finally replace the unique marker with the actual HTML link
-  if (reviewLink) {
-    const safeUrl = escapeHtml(reviewLink);
+  // Finally replace the unique marker with the actual HTML link (use 5-star link)
+  if (fiveStarPreviewLink) {
+    const safeUrl = escapeHtml(fiveStarPreviewLink);
     const linkHtml = '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>';
     previewText = previewText.replace(/___REVIEW_LINK_PLACEHOLDER___/g, linkHtml);
   }
@@ -1309,8 +1322,108 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
       qrDownload.href = dataUrl;
     } catch {}
   });
+
+  // Add event listener for checking expired links
+  const btnCheckExpired = document.getElementById('btnCheckExpired');
+  btnCheckExpired?.addEventListener('click', checkAndResendExpiredLinks);
   qrClose?.addEventListener('click', () => { qrModal.style.display = 'none'; });
   qrModal?.addEventListener('click', (e) => { if (e.target === qrModal) qrModal.style.display = 'none'; });
+
+  // Review Link Tracking and Auto-Resend
+  async function checkAndResendExpiredLinks() {
+    try {
+      const now = new Date();
+      const threeDaysAgo = new Date(now.getTime() - 1 * 60 * 1000);
+      
+      // Find all unclicked review links that are older than 3 days
+      const expiredLinks = await db.collection('reviewTracking')
+        .where('clicked', '==', false)
+        .where('expiresAt', '<=', now)
+        .where('resendCount', '<', 3) // Limit to 3 resends
+        .get();
+      
+      if (expiredLinks.empty) {
+        showToast('No expired review links found to resend.', 'info');
+        return;
+      }
+      
+      let resendCount = 0;
+      for (const doc of expiredLinks.docs) {
+        const tracking = doc.data();
+        
+        try {
+          // Generate new tracking URL for the resend (reuse same tracking ID)
+          const trackingUrl = `${window.location.origin}/tracking.html?tracking=${doc.id}&link=${encodeURIComponent(tracking.reviewLink)}`;
+          
+          // Resend the message with updated tracking URL
+          if (tracking.channel === 'sms') {
+            // Replace any existing tracking URLs or placeholders with new tracking URL
+            let resendMessage = tracking.message;
+            if (resendMessage.includes('[TRACKING_URL]')) {
+              resendMessage = resendMessage.replace('[TRACKING_URL]', trackingUrl);
+            } else if (resendMessage.includes('tracking.html?tracking=')) {
+              // Replace existing tracking URL
+              resendMessage = resendMessage.replace(/https?:\/\/[^\s]+\/tracking\.html\?tracking=[^\s]+/, trackingUrl);
+            } else {
+              // Append tracking URL if not present
+              resendMessage = `${resendMessage}\n\nPlease leave us a review: ${trackingUrl}`;
+            }
+            
+            const smsPayload = {
+              to: tracking.to,
+              body: resendMessage
+            };
+            await db.collection("messages").add(smsPayload);
+          } else if (tracking.channel === 'email') {
+            // For email, use the stored finalHtml if available, otherwise build from message
+            let emailHtml = tracking.finalHtml;
+            if (!emailHtml) {
+              emailHtml = tracking.message.replace(/\n/g, '<br>');
+            }
+            
+            // Replace tracking URLs in HTML
+            if (emailHtml.includes('tracking.html?tracking=')) {
+              emailHtml = emailHtml.replace(/href="[^"]*tracking\.html\?tracking=[^"]*"/g, `href="${trackingUrl}"`);
+            } else {
+              // Add tracking link if not present
+              emailHtml += `<br><br><a href="${trackingUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+            }
+            
+            const mailPayload = {
+              to: tracking.to,
+              message: {
+                subject: `We'd love your feedback! (Reminder)`,
+                html: emailHtml
+              }
+            };
+            await db.collection("mail").add(mailPayload);
+          }
+          
+          // Update tracking record
+          await doc.ref.update({
+            resendCount: firebase.firestore.FieldValue.increment(1),
+            lastResentAt: firebase.firestore.FieldValue.serverTimestamp(),
+            expiresAt: new Date(Date.now() + 1 * 60 * 1000) // Reset expiration
+          });
+          
+          resendCount++;
+        } catch (error) {
+          console.error('Failed to resend for tracking ID:', doc.id, error);
+        }
+      }
+      
+      showToast(`Successfully resent ${resendCount} review requests.`, 'success');
+      
+      // Refresh the deliveries display
+      if (typeof loadDeliveries === 'function') {
+        loadDeliveries();
+      }
+      
+    } catch (error) {
+      console.error('Error checking expired links:', error);
+      showToast('Failed to check expired links: ' + error.message, 'error');
+    }
+  }
 
   // AI Reply Assistant
   const reviewInput = document.getElementById('reviewInput');
@@ -1609,17 +1722,17 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
         const messageTemplate = message;
 
-        // SMS: use the URL directly (most SMS apps will auto-link it)
+        // SMS: prepare message template for tracking URL replacement
         let messageForSms = messageTemplate;
         if (reviewLink) {
-          const smsUrl = fiveStarReviewLink;
+          // We'll replace this with tracking URL after creating the tracking record
           if (messageTemplate.includes("[Click here to leave a review]")) {
-            messageForSms = messageTemplate.replace("[Click here to leave a review]", smsUrl);
+            messageForSms = messageTemplate.replace("[Click here to leave a review]", "[TRACKING_URL]");
           } else if (messageTemplate.includes(fiveStarReviewLink) || messageTemplate.includes(reviewLink)) {
             // Keep the existing URL as-is
-            messageForSms = messageTemplate.replace(reviewLink, smsUrl);
+            messageForSms = messageTemplate.replace(reviewLink, "[TRACKING_URL]");
           } else {
-            messageForSms = `${messageTemplate}\n\nPlease leave us a review: ${smsUrl}`;
+            messageForSms = `${messageTemplate}\n\nPlease leave us a review: [TRACKING_URL]`;
           }
         }
 
@@ -1633,94 +1746,185 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         try {
           if (sendText && phone && message) {
+            let finalSmsMessage = messageForSms;
+            let trackingRef = null;
+            
+            // Create tracking record FIRST if review link exists
+            if (reviewLink) {
+              try {
+                trackingRef = await db.collection('reviewTracking').add({
+                  ownerEmail: currentUser.email,
+                  patientFullName: document.getElementById('fullName').value.trim(),
+                  patientPreferredName: preferredName || '',
+                  to: "+1" + phone.replace(/\D/g, ""),
+                  channel: 'sms',
+                  reviewLink: fiveStarReviewLink,
+                  message: messageForSms, // Will store original template
+                  sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  expiresAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now (for testing)
+                  clicked: false,
+                  clickCount: 0,
+                  resendCount: 0,
+                  lastResentAt: null
+                });
+                
+                // Generate tracking URL
+                const trackingUrl = `${window.location.origin}/tracking.html?tracking=${trackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
+                
+                // Replace [TRACKING_URL] placeholder with actual tracking URL
+                finalSmsMessage = messageForSms.replace('[TRACKING_URL]', trackingUrl);
+                
+                console.log("✅ Created tracking record:", trackingRef.id);
+                console.log("🔗 Generated tracking URL:", trackingUrl);
+              } catch (e) {
+                console.warn('Failed to create tracking record, sending without tracking:', e);
+                // Fallback: replace with direct link
+                finalSmsMessage = messageForSms.replace('[TRACKING_URL]', fiveStarReviewLink);
+              }
+            } else {
+              // No review link, remove placeholder
+              console.log("❌ No review link found - tracking will not be created");
+              finalSmsMessage = messageForSms.replace('[TRACKING_URL]', '');
+            }
+            
             const smsPayload = {
               to: "+1" + phone.replace(/\D/g, ""),
-              body: messageForSms
+              body: finalSmsMessage
             };
             console.log("📱 Sending SMS:", smsPayload);
             await db.collection("messages").add(smsPayload);
-            // Log delivery
+            
+            // Log delivery record
             try {
-              await db.collection('deliveries').add({
+              const deliveryRef = await db.collection('deliveries').add({
                 ownerEmail: currentUser.email,
                 patientFullName: document.getElementById('fullName').value.trim(),
                 patientPreferredName: preferredName || '',
                 to: smsPayload.to,
                 channel: 'sms',
-                message: messageForSms,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                message: finalSmsMessage,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                trackingId: trackingRef ? trackingRef.id : null
               });
+              
+              // Update tracking record with delivery ID
+              if (trackingRef) {
+                await trackingRef.update({
+                  deliveryId: deliveryRef.id,
+                  finalMessage: finalSmsMessage // Store the final message with tracking URL
+                });
+              }
             } catch (e) { console.warn('Failed to log SMS delivery', e); }
             showToast("Text message queued for delivery.", 'success', 'Sent');
           }
 
           if (sendEmail && email && message) {
+            let finalEmailMessage = messageForEmailText;
+            let emailTrackingRef = null;
+            let trackingUrl = null;
             
+            // Create tracking record FIRST if review link exists
+            if (reviewLink) {
+              console.log("🔗 Review link found, creating tracking record...", reviewLink);
+              try {
+                console.log("📝 Creating email tracking record...");
+                emailTrackingRef = await db.collection('reviewTracking').add({
+                  ownerEmail: currentUser.email,
+                  patientFullName: document.getElementById('fullName').value.trim(),
+                  patientPreferredName: preferredName || '',
+                  to: email,
+                  channel: 'email',
+                  reviewLink: fiveStarReviewLink,
+                  message: messageForEmailText, // Will store original template
+                  sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+                  expiresAt: new Date(Date.now() + 1 * 60 * 1000), // 1 minute from now (for testing)
+                  clicked: false,
+                  clickCount: 0,
+                  resendCount: 0,
+                  lastResentAt: null
+                });
+                
+                // Generate tracking URL
+                trackingUrl = `${window.location.origin}/tracking.html?tracking=${emailTrackingRef.id}&link=${encodeURIComponent(fiveStarReviewLink)}`;
+                
+                console.log("✅ Created email tracking record:", emailTrackingRef.id);
+                console.log("🔗 Generated email tracking URL:", trackingUrl);
+                console.log("📧 About to send email with tracking...");
+              } catch (e) {
+                console.warn('Failed to create email tracking record, sending without tracking:', e);
+                trackingUrl = fiveStarReviewLink; // Fallback to direct link
+              }
+            } else {
+              console.log("❌ No review link found for email - tracking will not be created");
+            }
             
-            let htmlWithLinks = escapeHtml(messageTemplate)
-  .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
-    const safeUrl = escapeHtml(url);
-    // If this URL is already part of an href attribute, skip
-    const before = full.slice(Math.max(0, offset - 10), offset);
-    if (before.includes('href="') || before.includes("href='")) return url;
-    if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
-      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-    }
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
-  });
+            // Build HTML email content with tracking links
+            let htmlTemplate = messageTemplate;
+            
+            // If email body lacks the placeholder or direct link, append a friendly link line  
+            if (reviewLink && !messageTemplate.includes("[Click here to leave a review]") && !messageTemplate.includes(fiveStarReviewLink)) {
+              htmlTemplate = `${messageTemplate}\n\nPlease leave us a review: [Click here to leave a review]`;
+              finalEmailMessage = htmlTemplate; // Update text version too
+            }
+            
+            let htmlWithLinks = escapeHtml(htmlTemplate)
+              .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
+                const safeUrl = escapeHtml(url);
+                // If this URL is already part of an href attribute, skip
+                const before = full.slice(Math.max(0, offset - 10), offset);
+                if (before.includes('href="') || before.includes("href='")) return url;
+                if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
+                  return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+                }
+                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
+              });
 
-// If email body lacks the placeholder or direct link, append a friendly link line
-if (reviewLink && !messageTemplate.includes("[Click here to leave a review]") && !(fiveStarReviewLink && messageTemplate.includes(fiveStarReviewLink))) {
-  // Update the template so preview/logging are consistent
-  const augmentedTemplate = `${messageTemplate}\n\nPlease leave us a review: [Click here to leave a review]`;
-  // Recompute htmlWithLinks because message changed
-  htmlWithLinks = escapeHtml(augmentedTemplate)
-    .replace(/(https?:\/\/[^\s]+)/g, function(url, _m, offset, full) {
-      const safeUrl = escapeHtml(url);
-      const before = full.slice(Math.max(0, offset - 10), offset);
-      if (before.includes('href="') || before.includes("href='")) return url;
-      if (url.includes('google.com') && (url.includes('review') || url.includes('writereview') || url.includes('lrd=') || url.includes('search?q=') || url.includes('local/writereview'))) {
-        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-      }
-      return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline;">${safeUrl}</a>`;
-    });
-}
+            const safeHtml = htmlWithLinks
+              .replace(/\[Click here to leave a review\]/g, function() {
+                const linkToUse = trackingUrl || fiveStarReviewLink;
+                const safeUrl = escapeHtml(linkToUse);
+                return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
+              })
+              .replace(/\n/g, "<br>");
 
-const safeHtml = htmlWithLinks
-  .replace(/\[Click here to leave a review\]/g, function() {
-    const safeUrl = escapeHtml(fiveStarReviewLink);
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; text-decoration: underline; font-weight: 500;">Click here to leave a review</a>`;
-  })
-  .replace(/\n/g, "<br>");
-
-const friendlyName = (profileSenderDisplay || profileSenderName || '').trim();
-const mailPayload = {
-  to: email,
-  from: friendlyName ? `${friendlyName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
-  message: {
-    subject: `We'd love your feedback, ${preferredName || "friend"}!`,
-    html: safeHtml
-  }
-};
-
-          
+            const friendlyName = (profileSenderDisplay || profileSenderName || '').trim();
+            const mailPayload = {
+              to: email,
+              from: friendlyName ? `${friendlyName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
+              message: {
+                subject: `We'd love your feedback, ${preferredName || "friend"}!`,
+                html: safeHtml
+              }
+            };
+            
             // Apply custom email subject if configured
             if (userEmailSubject) {
               mailPayload.message.subject = userEmailSubject.replaceAll('{name}', preferredName || 'friend');
             }
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
-            // Log delivery
+            
+            // Log delivery record
             try {
-              await db.collection('deliveries').add({
+              const deliveryRef = await db.collection('deliveries').add({
                 ownerEmail: currentUser.email,
                 patientFullName: document.getElementById('fullName').value.trim(),
                 patientPreferredName: preferredName || '',
                 to: email,
                 channel: 'email',
-                message: messageForEmailText,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                message: finalEmailMessage,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                trackingId: emailTrackingRef ? emailTrackingRef.id : null
               });
+              
+              // Update tracking record with delivery ID and final HTML
+              if (emailTrackingRef) {
+                await emailTrackingRef.update({
+                  deliveryId: deliveryRef.id,
+                  finalMessage: finalEmailMessage,
+                  finalHtml: safeHtml // Store the final HTML with tracking URL
+                });
+              }
             } catch (e) { console.warn('Failed to log email delivery', e); }
             showToast("Email queued for delivery.", 'success', 'Sent');
           }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Review Link Tracking - QuickReviews</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --primary-blue: #1e3a8a;
+      --primary-blue-hover: #1e40af;
+      --secondary-blue: #3b82f6;
+      --light-blue: #dbeafe;
+      --dark-blue: #1e293b;
+      --text-primary: #1f2937;
+      --text-secondary: #6b7280;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--background);
+      min-height: 100vh;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      border-radius: 12px;
+    }
+    
+    h1 {
+      color: var(--primary-blue);
+      margin-bottom: 1rem;
+      font-size: 1.875rem;
+      font-weight: 700;
+    }
+    
+    .subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      font-size: 1.125rem;
+    }
+    
+    .tracking-info {
+      background: var(--light-blue);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .tracking-id {
+      font-family: monospace;
+      background: var(--card-bg);
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      margin: 0.5rem 0;
+      display: inline-block;
+    }
+    
+    .redirect-button {
+      background: var(--primary-blue);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: 1rem;
+    }
+    
+    .redirect-button:hover {
+      background: var(--primary-blue-hover);
+    }
+    
+    .loading {
+      display: none;
+      margin-top: 1rem;
+    }
+    
+    .spinner {
+      border: 3px solid var(--light-blue);
+      border-top: 3px solid var(--primary-blue);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      color: var(--error);
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo.png" alt="QuickReviews Logo" class="logo">
+    <h1>Review Link Tracking</h1>
+    <p class="subtitle">Tracking your review request...</p>
+    
+    <div class="tracking-info">
+      <p><strong>Tracking ID:</strong></p>
+      <div class="tracking-id" id="trackingId">Loading...</div>
+      <p>This link has been tracked and will redirect you to the review page.</p>
+    </div>
+    
+    <button class="redirect-button" id="redirectBtn" onclick="redirectToReview()">
+      Continue to Review
+    </button>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Redirecting...</p>
+    </div>
+    
+    <div class="error" id="error" style="display: none;"></div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD20NR1jIBq_L3znffAe8c82VH49NcMmeE",
+      authDomain: "ezreview-ee8f0.firebaseapp.com",
+      projectId: "ezreview-ee8f0",
+      storageBucket: "ezreview-ee8f0.firebasestorage.app",
+      messagingSenderId: "985522835249",
+      appId: "1:985522835249:web:fda8bab4bac91fb898ea10",
+      measurementId: "G-RBB28JDVJW"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Get tracking ID from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const trackingId = urlParams.get('tracking');
+    const reviewLink = urlParams.get('link');
+
+    if (trackingId) {
+      document.getElementById('trackingId').textContent = trackingId;
+      
+      // Mark the review link as clicked
+      markReviewLinkClicked(trackingId);
+    } else {
+      document.getElementById('trackingId').textContent = 'No tracking ID found';
+    }
+
+    // Function to mark review link as clicked
+    async function markReviewLinkClicked(trackingId) {
+      try {
+        await db.collection('reviewTracking').doc(trackingId).update({
+          clicked: true,
+          clickedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          clickCount: firebase.firestore.FieldValue.increment(1)
+        });
+        console.log('Review link marked as clicked:', trackingId);
+      } catch (error) {
+        console.error('Failed to mark review link as clicked:', error);
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'Failed to track click: ' + error.message;
+      }
+    }
+
+    // Function to redirect to the actual review link
+    function redirectToReview() {
+      if (reviewLink) {
+        document.getElementById('redirectBtn').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+        
+        // Small delay to ensure tracking is recorded
+        setTimeout(() => {
+          window.location.href = reviewLink;
+        }, 1000);
+      } else {
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').textContent = 'No review link found. Please contact support.';
+      }
+    }
+
+    // Auto-redirect after a short delay if tracking ID is present
+    if (trackingId && reviewLink) {
+      setTimeout(() => {
+        redirectToReview();
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

@@ -72,7 +72,7 @@ service cloud.firestore {
     // Delivery log: providers can write and read their own entries
     match /deliveries/{docId} {
       allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'message', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'message', 'createdAt', 'trackingId'])
         && request.resource.data.ownerEmail == request.auth.token.email
         && request.resource.data.channel in ['sms', 'email']
         && request.resource.data.to is string
@@ -80,6 +80,31 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp;
       allow read: if isSignedIn() && resource.data.ownerEmail == request.auth.token.email;
       allow update, delete: if false;
+    }
+
+    // Review tracking: providers can write, read, and update their own tracking records
+    match /reviewTracking/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'reviewLink', 'message', 'sentAt', 'expiresAt', 'clicked', 'clickCount', 'resendCount', 'lastResentAt', 'deliveryId', 'finalMessage', 'finalHtml'])
+        && request.resource.data.ownerEmail == request.auth.token.email
+        && request.resource.data.channel in ['sms', 'email']
+        && request.resource.data.to is string
+        && request.resource.data.reviewLink is string
+        && request.resource.data.message is string
+        && request.resource.data.sentAt is timestamp
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.clicked is bool
+        && request.resource.data.clickCount is number
+        && request.resource.data.resendCount is number;
+      
+      allow read: if isSignedIn() && resource.data.ownerEmail == request.auth.token.email;
+      
+      // Allow updates for tracking clicks and resends
+      allow update: if isSignedIn() 
+        && resource.data.ownerEmail == request.auth.token.email
+        && request.resource.data.ownerEmail == resource.data.ownerEmail; // Can't change owner
+      
+      allow delete: if false;
     }
   }
 }
