@@ -1955,7 +1955,21 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
               mailPayload.message.subject = userEmailSubject.replaceAll('{name}', subjectName);
             }
             console.log("📧 Sending email:", mailPayload);
-            await db.collection("mail").add(mailPayload);
+            try {
+              await db.collection("mail").add(mailPayload);
+            } catch (err) {
+              console.warn('First attempt to queue email failed, retrying with simplified from:', err?.message || err);
+              try {
+                // Fallback: some environments may reject display names in From
+                const fallbackPayload = { ...mailPayload, from: 'feedback@ezreviews.app' };
+                await db.collection("mail").add(fallbackPayload);
+                console.log('📧 Retried email queued with fallback from.');
+              } catch (err2) {
+                console.error('❌ Failed to queue email:', err2);
+                showToast("Failed to queue email: " + (err2.message || ''), 'error', 'Error');
+                throw err2; // bubble to outer catch to stop success flow
+              }
+            }
             
             // Log delivery record
             try {
