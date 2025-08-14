@@ -77,7 +77,7 @@ async function checkAndResendExpiredLinks() {
           
           const mailPayload = {
             to: tracking.to,
-            from: 'feedback@ezreviews.app',
+            from: tracking.senderName ? `${tracking.senderName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
             message: {
               subject: `We'd love your feedback! (Reminder)`,
               html: emailHtml

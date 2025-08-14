@@ -1765,7 +1765,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
                   clicked: false,
                   clickCount: 0,
                   resendCount: 0,
-                  lastResentAt: null
+                  lastResentAt: null,
+                  senderName: (profileSenderDisplay || profileSenderName || '').trim() // Store sender name for resends
                 });
                 
                 // Generate tracking URL
@@ -1841,7 +1842,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
                   clicked: false,
                   clickCount: 0,
                   resendCount: 0,
-                  lastResentAt: null
+                  lastResentAt: null,
+                  senderName: (profileSenderDisplay || profileSenderName || '').trim() // Store sender name for resends
                 });
                 
                 // Generate tracking URL
