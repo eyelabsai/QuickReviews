@@ -2,12 +2,51 @@
 // This script can be run manually or scheduled with cron to check for expired links and resend them
 
 const admin = require('firebase-admin');
-const serviceAccount = require('../serviceAccountKey.json');
+const fs = require('fs');
+
+// Load service account credentials flexibly (env var JSON, base64, path, or local file)
+function loadServiceAccount() {
+  const env = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (env && env.trim()) {
+    try {
+      // If env looks like raw JSON
+      if (env.trim().startsWith('{')) {
+        return JSON.parse(env);
+      }
+      // If env looks like base64-encoded JSON
+      const b64Pattern = /^[A-Za-z0-9+/=\n\r]+$/;
+      if (b64Pattern.test(env.trim()) && env.trim().length > 100) {
+        const jsonStr = Buffer.from(env, 'base64').toString('utf8');
+        return JSON.parse(jsonStr);
+      }
+      // Otherwise, treat as file path
+      if (fs.existsSync(env)) {
+        const jsonStr = fs.readFileSync(env, 'utf8');
+        return JSON.parse(jsonStr);
+      }
+    } catch (e) {
+      console.error('Failed to parse GOOGLE_APPLICATION_CREDENTIALS env:', e.message);
+    }
+  }
+  // Fall back to local file for local runs
+  try {
+    // eslint-disable-next-line import/no-dynamic-require, global-require
+    return require('../serviceAccountKey.json');
+  } catch (e) {
+    return null;
+  }
+}
+
+const serviceAccount = loadServiceAccount();
+if (!serviceAccount) {
+  console.error('❌ Missing service account credentials. Provide GOOGLE_APPLICATION_CREDENTIALS (JSON, base64, or path) or ../serviceAccountKey.json');
+  process.exit(1);
+}
 
 // Initialize Firebase Admin
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  projectId: 'ezreview-ee8f0'
+  projectId: process.env.FIREBASE_PROJECT_ID || 'ezreview-ee8f0'
 });
 
 const db = admin.firestore();
@@ -39,7 +78,8 @@ async function checkAndResendExpiredLinks() {
         console.log(`📤 Resending ${tracking.channel} to ${tracking.to} for patient ${tracking.patientFullName}`);
         
         // Generate new tracking URL for the resend
-        const trackingUrl = `https://quickreviews-1.web.app/tracking.html?tracking=${doc.id}&link=${encodeURIComponent(tracking.reviewLink)}`;
+        const host = process.env.TRACKING_HOST || 'https://ezreview-ee8f0.web.app';
+        const trackingUrl = `${host}/tracking.html?tracking=${doc.id}&link=${encodeURIComponent(tracking.reviewLink)}`;
         
         // Resend the message with updated tracking URL
         if (tracking.channel === 'sms') {
