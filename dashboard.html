@@ -1720,7 +1720,22 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
 
         // Build message variants from the user's template
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
-        const messageTemplate = message;
+        
+        // Process message template to use preferred name
+        let messageTemplate = message;
+        if (preferredName) {
+          messageTemplate = messageTemplate.replace(/^Hi\s+/i, `Hi ${preferredName}, `);
+          messageTemplate = messageTemplate.replace(/^Hello\s+/i, `Hello ${preferredName}, `);
+          messageTemplate = messageTemplate.replace(/^Hey\s+/i, `Hey ${preferredName}! `);
+        } else {
+          // Fallback to full name if no preferred name
+          const fullName = document.getElementById('fullName').value.trim();
+          if (fullName) {
+            messageTemplate = messageTemplate.replace(/^Hi\s+/i, `Hi ${fullName}, `);
+            messageTemplate = messageTemplate.replace(/^Hello\s+/i, `Hello ${fullName}, `);
+            messageTemplate = messageTemplate.replace(/^Hey\s+/i, `Hey ${fullName}! `);
+          }
+        }
 
         // SMS: prepare message template for tracking URL replacement
         let messageForSms = messageTemplate;
