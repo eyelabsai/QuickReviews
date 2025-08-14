@@ -1718,6 +1718,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
         const sendText = document.getElementById("sendText").checked;
         const sendEmail = document.getElementById("sendEmail").checked;
         let message = document.getElementById("message").value.trim();
+        // Work on a mutable template copy derived from the current message
+        let messageTemplate = message || "";
 
         if (!(sendText || sendEmail)) {
           showToast("Please select at least one delivery method (Text or Email).", 'info');
