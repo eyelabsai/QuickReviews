@@ -85,6 +85,27 @@ service cloud.firestore {
 
     // Review tracking: providers can write, read, and update their own tracking records
     match /reviewTracking/{docId} {
+      function isClickUpdate() {
+        // Allow unauthenticated click tracking updates that only flip clicked fields
+        let diff = request.resource.data.diff(resource.data);
+        return diff.changedKeys().hasOnly(['clicked','clickedAt','clickCount'])
+          && diff.addedKeys().size() == 0
+          && diff.removedKeys().size() == 0
+          // Ensure ownership and immutable fields are not altered
+          && request.resource.data.ownerEmail == resource.data.ownerEmail
+          && request.resource.data.channel == resource.data.channel
+          && request.resource.data.to == resource.data.to
+          && request.resource.data.reviewLink == resource.data.reviewLink
+          && request.resource.data.message == resource.data.message
+          && request.resource.data.sentAt == resource.data.sentAt
+          && request.resource.data.expiresAt == resource.data.expiresAt
+          && request.resource.data.resendCount == resource.data.resendCount
+          && request.resource.data.lastResentAt == resource.data.lastResentAt
+          && request.resource.data.deliveryId == resource.data.deliveryId
+          && request.resource.data.finalMessage == resource.data.finalMessage
+          && request.resource.data.finalHtml == resource.data.finalHtml
+          && request.resource.data.senderName == resource.data.senderName;
+      }
       allow create: if isSignedIn()
         && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'reviewLink', 'message', 'sentAt', 'expiresAt', 'clicked', 'clickCount', 'resendCount', 'lastResentAt', 'deliveryId', 'finalMessage', 'finalHtml', 'senderName'])
         && request.resource.data.ownerEmail == request.auth.token.email
@@ -101,9 +122,11 @@ service cloud.firestore {
       allow read: if isSignedIn() && resource.data.ownerEmail == request.auth.token.email;
       
       // Allow updates for tracking clicks and resends
-      allow update: if isSignedIn() 
-        && resource.data.ownerEmail == request.auth.token.email
-        && request.resource.data.ownerEmail == resource.data.ownerEmail; // Can't change owner
+      // 1) Authenticated owners may update their own docs
+      // 2) Public click tracking page may update only click fields
+      allow update: if (
+          (isSignedIn() && resource.data.ownerEmail == request.auth.token.email && request.resource.data.ownerEmail == resource.data.ownerEmail)
+        ) || isClickUpdate();
       
       allow delete: if false;
     }

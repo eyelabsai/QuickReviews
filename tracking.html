@@ -134,27 +134,18 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container" id="ui" style="display:none;">
     <img src="logo.png" alt="QuickReviews Logo" class="logo">
     <h1>Review Link Tracking</h1>
     <p class="subtitle">Tracking your review request...</p>
-    
     <div class="tracking-info">
       <p><strong>Tracking ID:</strong></p>
       <div class="tracking-id" id="trackingId">Loading...</div>
       <p>This link has been tracked and will redirect you to the review page.</p>
     </div>
-    
-    <button class="redirect-button" id="redirectBtn" onclick="redirectToReview()">
-      Continue to Review
-    </button>
-    
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Redirecting...</p>
-    </div>
-    
-    <div class="error" id="error" style="display: none;"></div>
+    <button class="redirect-button" id="redirectBtn" onclick="redirectToReview()">Continue to Review</button>
+    <div class="loading" id="loading"><div class="spinner"></div><p>Redirecting...</p></div>
+    <div class="error" id="error" style="display:none;"></div>
   </div>
 
   <!-- Firebase -->
@@ -175,20 +166,27 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    // Get tracking ID from URL parameters
+    
+    // Attempt to be invisible: if we have a valid link, redirect immediately and track click in the background
     const urlParams = new URLSearchParams(window.location.search);
     const trackingId = urlParams.get('tracking');
     const reviewLink = urlParams.get('link');
-
-    if (trackingId) {
-      document.getElementById('trackingId').textContent = trackingId;
-      
-      // Mark the review link as clicked
-      markReviewLinkClicked(trackingId);
+    
+    if (reviewLink) {
+      // Fire-and-forget click tracking; UI remains hidden unless we error
+      if (trackingId) {
+        markReviewLinkClicked(trackingId).catch(() => {/* error will reveal UI below */});
+      }
+      setTimeout(() => { window.location.replace(reviewLink); }, 50);
     } else {
-      document.getElementById('trackingId').textContent = 'No tracking ID found';
+      // No link; show UI with error
+      document.getElementById('ui').style.display = 'block';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').textContent = 'No review link found. Please contact support.';
     }
+
+    // Populate UI fields only if we ever need to show the page (e.g., error)
+    if (trackingId) { document.getElementById('trackingId').textContent = trackingId; }
 
     // Function to mark review link as clicked
     async function markReviewLinkClicked(trackingId) {
@@ -201,8 +199,10 @@
         console.log('Review link marked as clicked:', trackingId);
       } catch (error) {
         console.error('Failed to mark review link as clicked:', error);
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'Failed to track click: ' + error.message;
+        // Only show full UI if tracking fails; by default we stay invisible during happy path
+        const ui = document.getElementById('ui'); ui.style.display = 'block';
+        const err = document.getElementById('error'); err.style.display = 'block';
+        err.textContent = 'Failed to track click: ' + error.message;
       }
     }
 
@@ -211,23 +211,15 @@
       if (reviewLink) {
         document.getElementById('redirectBtn').style.display = 'none';
         document.getElementById('loading').style.display = 'block';
-        
-        // Small delay to ensure tracking is recorded
-        setTimeout(() => {
-          window.location.href = reviewLink;
-        }, 1000);
+        setTimeout(() => { window.location.href = reviewLink; }, 400);
       } else {
-        document.getElementById('error').style.display = 'block';
-        document.getElementById('error').textContent = 'No review link found. Please contact support.';
+        document.getElementById('ui').style.display = 'block';
+        const err = document.getElementById('error'); err.style.display = 'block';
+        err.textContent = 'No review link found. Please contact support.';
       }
     }
 
-    // Auto-redirect after a short delay if tracking ID is present
-    if (trackingId && reviewLink) {
-      setTimeout(() => {
-        redirectToReview();
-      }, 2000);
-    }
+    // We already redirected above; the UI path is only used on error/manual.
   </script>
 </body>
 </html>
