@@ -524,7 +524,7 @@
 
               <div class="form-group">
                 <label for="preferredName">Preferred Name</label>
-                <input type="text" id="preferredName" name="preferredName" required>
+                <input type="text" id="preferredName" name="preferredName">
               </div>
 
               <div class="form-group">
@@ -1074,7 +1074,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
   }
 
   function buildGeneratedMessage({ tone, length }) {
-    const name = preferredNameInput.value.trim() || 'there';
+    const fullNameInput = document.getElementById('fullName');
+    const name = preferredNameInput.value.trim() || ((fullNameInput?.value || '').trim()) || 'there';
     const base = {
       warm: `Hi ${name},\n\nThank you for visiting us today. Your feedback helps other patients find great care. Would you mind sharing a quick review?\n\nPlease leave us a review: [Click here to leave a review]\n\nThanks so much,\nSarah`,
       professional: `Hello ${name},\n\nThank you for your visit. We value your experience and would appreciate a brief review of your care.\n\nLeave a review: [Click here to leave a review]\n\nSincerely,\nSarah`,
@@ -1502,7 +1503,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
   }
 
   function copilotDraftFromPrompt(prompt) {
-    const name = preferredNameInput.value.trim() || 'there';
+    const fullNameInput = document.getElementById('fullName');
+    const name = preferredNameInput.value.trim() || ((fullNameInput?.value || '').trim()) || 'there';
     const base = buildGeneratedMessage({ tone: 'warm', length: 'medium' });
     if (/translate.*spanish/i.test(prompt)) {
       return base
@@ -1726,6 +1728,15 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
           return;
         }
 
+        // Validate phone if texting
+        if (sendText) {
+          const digits = (phone || '').replace(/\D/g, '');
+          if (digits.length !== 10) {
+            showToast("Enter a valid 10-digit US phone number to send a text.", 'error', 'Invalid number');
+            return;
+          }
+        }
+
         // Build message variants from the user's template
         const fiveStarReviewLink = reviewLink ? add5StarToReviewLink(reviewLink) : reviewLink;
         // Avoid duplicating names: only inject greeting name if no placeholder tokens are present
@@ -1825,7 +1836,13 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
               body: finalSmsMessage
             };
             console.log("📱 Sending SMS:", smsPayload);
-            await db.collection("messages").add(smsPayload);
+            try {
+              await db.collection("messages").add(smsPayload);
+            } catch (err) {
+              console.error('Failed to queue SMS:', err);
+              showToast("Failed to queue text: " + (err.message || ''), 'error', 'Error');
+              throw err;
+            }
             
             // Log delivery record
             try {
@@ -1922,18 +1939,20 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
               .replace(/\n/g, "<br>");
 
             const friendlyName = (profileSenderDisplay || profileSenderName || '').trim();
+            const fullNameForSubject = document.getElementById('fullName').value.trim();
             const mailPayload = {
               to: email,
               from: friendlyName ? `${friendlyName} <feedback@ezreviews.app>` : 'feedback@ezreviews.app',
               message: {
-                subject: `We'd love your feedback, ${preferredName || "friend"}!`,
+                subject: `We'd love your feedback, ${preferredName || fullNameForSubject || "friend"}!`,
                 html: safeHtml
               }
             };
             
             // Apply custom email subject if configured
             if (userEmailSubject) {
-              mailPayload.message.subject = userEmailSubject.replaceAll('{name}', preferredName || 'friend');
+              const subjectName = preferredName || fullNameForSubject || 'friend';
+              mailPayload.message.subject = userEmailSubject.replaceAll('{name}', subjectName);
             }
             console.log("📧 Sending email:", mailPayload);
             await db.collection("mail").add(mailPayload);
