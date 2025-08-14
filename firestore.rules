@@ -86,7 +86,7 @@ service cloud.firestore {
     // Review tracking: providers can write, read, and update their own tracking records
     match /reviewTracking/{docId} {
       allow create: if isSignedIn()
-        && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'reviewLink', 'message', 'sentAt', 'expiresAt', 'clicked', 'clickCount', 'resendCount', 'lastResentAt', 'deliveryId', 'finalMessage', 'finalHtml'])
+        && request.resource.data.keys().hasOnly(['ownerEmail', 'patientFullName', 'patientPreferredName', 'to', 'channel', 'reviewLink', 'message', 'sentAt', 'expiresAt', 'clicked', 'clickCount', 'resendCount', 'lastResentAt', 'deliveryId', 'finalMessage', 'finalHtml', 'senderName'])
         && request.resource.data.ownerEmail == request.auth.token.email
         && request.resource.data.channel in ['sms', 'email']
         && request.resource.data.to is string

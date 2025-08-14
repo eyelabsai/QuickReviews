@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Login | Feedback Tool</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Firebase JS SDKs -->
@@ -77,48 +77,54 @@
   </div>
 
   <!-- Login Card -->
-  <div class="card" style="max-width:480px;">
-    <h2 style="margin-bottom:.5rem; text-align:center;">Welcome back</h2>
-    <p class="muted-text" style="text-align:center; margin-bottom:1.25rem;">Sign in to continue</p>
-    <form id="loginForm">
+  <div class="card auth-card">
+    <h2 class="auth-title">Welcome back</h2>
+    <p class="muted-text auth-subtitle">Sign in to continue</p>
+    <form id="loginForm" class="form-stack">
       <div class="form-group full">
-        <label for="identifier">Email or Username</label>
-        <input type="text" id="identifier" placeholder="you@clinic.com or username" autocomplete="username" required>
+        <label for="identifier" class="sr-only">Email or Username</label>
+        <input type="text" id="identifier" placeholder="you@clinic.com or user" autocomplete="username" required>
       </div>
 
       <div class="form-group full">
-        <label for="password">Password</label>
-        <div style="position: relative;">
-          <input type="password" id="password" placeholder="••••••••" required style="padding-right: 40px;">
-          <button type="button" id="togglePassword" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666; font-size: 16px; padding: 4px;">
-            👁️
+        <label for="password" class="sr-only">Password</label>
+        <div class="input-with-icon">
+          <input type="password" id="password" placeholder="Password" required>
+          <button type="button" id="togglePassword" class="toggle-password" aria-label="Show password" aria-pressed="false">
+            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94"/>
+              <path d="M1 1l22 22"/>
+              <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-3.22 4.31"/>
+              <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"/>
+            </svg>
           </button>
         </div>
       </div>
 
-      <div class="form-group full">
-        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-          <input type="checkbox" id="keepLoggedIn" checked>
-          <span>Keep me logged in</span>
-        </label>
+      <label class="checkbox-row checkbox-label" for="keepLoggedIn">
+        <input type="checkbox" id="keepLoggedIn" checked>
+        <span>Keep me logged in</span>
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-pill btn-elevated btn-with-icon btn-full">
+        <span>Sign in</span>
+        <span class="icon">→</span>
+      </button>
+
+      <div class="helper-links">
+        <button type="button" id="forgotBtn" class="btn btn-link">Forgot password?</button>
+        <span class="divider">•</span>
+        <button type="button" id="forgotUsernameBtn" class="btn btn-link">Forgot username?</button>
+        <span class="divider">•</span>
+        <button type="button" id="forgotEmailBtn" class="btn btn-link">Forgot email?</button>
       </div>
 
-      <div class="form-group full" style="display:flex; gap:.75rem; align-items:center; justify-content:space-between;">
-        <button type="submit" class="btn btn-primary btn-pill btn-elevated btn-with-icon" style="flex:1.2;">
-          <span>Sign in</span>
-          <span class="icon">→</span>
-        </button>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:.25rem;">
-          <button type="button" id="forgotBtn" class="btn btn-link" style="padding:0;">Forgot password?</button>
-          <div style="display:flex; gap:.75rem;">
-            <button type="button" id="forgotUsernameBtn" class="btn btn-link" style="padding:0;">Forgot username?</button>
-            <button type="button" id="forgotEmailBtn" class="btn btn-link" style="padding:0;">Forgot email?</button>
-          </div>
-        </div>
-      </div>
-
-      <p id="error" class="error-text" style="display:none; text-align:center; margin-top:.25rem;"></p>
-      <p id="info" class="muted-text" style="display:none; text-align:center; margin-top:.25rem;"></p>
+      <p id="error" class="error-text text-center" style="display:none;"></p>
+      <p id="info" class="muted-text text-center" style="display:none;"></p>
     </form>
   </div>
 
@@ -175,18 +181,15 @@
       }
     });
 
-    // Password visibility toggle
+    // Password visibility toggle (SVG icons, accessible)
     document.getElementById('togglePassword').addEventListener('click', function() {
       const passwordInput = document.getElementById('password');
-      const toggleBtn = document.getElementById('togglePassword');
-      
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleBtn.textContent = '🙈';
-      } else {
-        passwordInput.type = 'password';
-        toggleBtn.textContent = '👁️';
-      }
+      const btn = this;
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      btn.classList.toggle('is-visible', isHidden);
+      btn.setAttribute('aria-pressed', String(isHidden));
+      btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
     });
 
     // Forgot password

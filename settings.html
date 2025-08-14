@@ -80,12 +80,6 @@
           <div class="form-group">
             <label for="defaultMessage">Default message</label>
             <textarea id="defaultMessage" placeholder="Your default message template. Use {name} for the patient's name. Include [Click here to leave a review] to show the link."></textarea>
-            <div class="hint-example">Example:<br>
-              Hi {name}! We hope you enjoyed your visit today. Your feedback is very valuable and we would love to hear from you.<br><br>
-              Please leave us a review: [Click here to leave a review]<br><br>
-              Thanks!<br>
-              Sarah
-            </div>
           </div>
         </div>
         <div class="grid">
@@ -162,7 +156,7 @@
       if (!user) { window.location.href = 'index.html'; return; }
       currentUser = user;
       const qs = await db.collection('users').where('email', '==', user.email).limit(1).get();
-      if (qs.empty) {
+        if (qs.empty) {
         userDocRef = db.collection('users').doc(user.uid);
         await userDocRef.set({ email: user.email }, { merge: true });
       } else {
@@ -170,7 +164,12 @@
         const data = qs.docs[0].data();
         if (data.senderName) document.getElementById('senderName').value = data.senderName;
         if (data.emailSubject) document.getElementById('emailSubject').value = data.emailSubject;
-        if (data.defaultMessage) document.getElementById('defaultMessage').value = data.defaultMessage;
+          if (data.defaultMessage) {
+            document.getElementById('defaultMessage').value = data.defaultMessage;
+          } else {
+            const sender = (data.senderName || 'Your team');
+            document.getElementById('defaultMessage').value = `Hi {name}!\n\nWe’re so grateful for the opportunity to take care of you. It would mean a lot to us if you shared your story by using the link below to leave feedback on Google.\n\nThanks!\n${sender}`;
+          }
         if (data.reviewLink) document.getElementById('reviewLink').value = data.reviewLink;
         if (data.practiceName) document.getElementById('practiceName').value = data.practiceName;
         if (data.logoUrl) {
