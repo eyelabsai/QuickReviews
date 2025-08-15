@@ -1,3 +1,5 @@
+// COMMENTED OUT - Reminder functionality disabled for now
+/*
 // Auto-resend script for expired review links
 // This script can be run manually or scheduled with cron to check for expired links and resend them
 
@@ -235,3 +237,4 @@ module.exports = {
   checkAndResendExpiredLinks,
   getTrackingStats
 };
+*/

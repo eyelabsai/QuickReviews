@@ -166,6 +166,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    try { db.settings({ experimentalAutoDetectLongPolling: true }); } catch (e) {}
     
     // Attempt to be invisible: if we have a valid link, redirect immediately and track click in the background
     const urlParams = new URLSearchParams(window.location.search);

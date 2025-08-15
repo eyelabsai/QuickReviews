@@ -1708,6 +1708,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
             let finalSmsMessage = messageForSms;
             let trackingRef = null;
             
+            // COMMENTED OUT - Reminder functionality disabled for now
+            /*
             // Create tracking record FIRST if review link exists
             if (reviewLink) {
               try {
@@ -1745,6 +1747,14 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
               // No review link, remove placeholder
               console.log("❌ No review link found - tracking will not be created");
               finalSmsMessage = messageForSms.replace('[TRACKING_URL]', '');
+            }
+            */
+            
+            // Direct link without tracking for now
+            if (reviewLink) {
+              finalSmsMessage = messageForSms.replace('[TRACKING_URL]', fiveStarReviewLink);
+            } else {
+              finalSmsMessage = messageForSms.replace('[TRACKING_URL]', ''); // Remove placeholder if no link
             }
             
             const smsPayload = {
@@ -1789,6 +1799,8 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
             let emailTrackingRef = null;
             let trackingUrl = null;
             
+            // COMMENTED OUT - Reminder functionality disabled for now
+            /*
             // Create tracking record FIRST if review link exists
             if (reviewLink) {
               console.log("🔗 Review link found, creating tracking record...", reviewLink);
@@ -1824,6 +1836,10 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
             } else {
               console.log("❌ No review link found for email - tracking will not be created");
             }
+            */
+            
+            // Direct link without tracking for now
+            trackingUrl = fiveStarReviewLink;
             
             // Build HTML email content with tracking links
             let htmlTemplate = messageTemplate;

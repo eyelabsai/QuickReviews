@@ -3,6 +3,8 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
+// COMMENTED OUT - Reminder functionality disabled for now
+/*
 exports.autoResendReviewRequests = functions.pubsub
   .schedule('every 1 minutes')
   .onRun(async () => {
@@ -97,3 +99,4 @@ exports.autoResendReviewRequests = functions.pubsub
       throw error;
     }
   });
+*/
