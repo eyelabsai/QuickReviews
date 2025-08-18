@@ -47,7 +47,7 @@ Use the Node invite script to create accounts quickly, optionally assign a usern
 ### Create a user (recommended)
 ```bash
 npm run create:user -- \
-  --email 'user@example.com' \
+  --email 'test2@gmail.com' \
   --password 'TempPass123!' \
   --fullName 'First Last' \
   --reviewLink 'https://g.page/r/your-link' \

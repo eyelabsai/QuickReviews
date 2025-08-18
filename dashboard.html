@@ -623,6 +623,25 @@
     transition: opacity 0.3s ease;
   }
   
+  /* Search Results Styling */
+  .search-results {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .search-summary {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  
+  .search-summary span {
+    color: var(--primary-blue);
+    font-weight: 600;
+  }
+  
   .ai-section { 
     padding: 1.25rem 1.5rem; 
     border-bottom: 1px solid rgba(229, 231, 235, 0.6); 
@@ -1492,17 +1511,29 @@
         <div class="card-body">
           <div class="card" style="margin-bottom:1rem;">
             <div class="card-body">
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
-                <strong>AI Reply Assistant</strong>
-                <div class="ai-mini">Paste a new review to draft a courteous response</div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+                <strong>Search Deliveries</strong>
+                <div class="ai-mini">Search by patient name to find specific deliveries</div>
               </div>
-              <div style="margin-top:.5rem; display:grid; grid-template-columns: 1fr auto; gap:.5rem;">
-                <textarea id="reviewInput" placeholder="Paste review text…" rows="3" style="min-height:80px;"></textarea>
-                <div style="display:flex; gap:.5rem; align-items:start;">
-                  <button type="button" id="btnDraftReply" class="btn btn-secondary btn-sm">Draft reply</button>
+              <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:.75rem; align-items:end;">
+                <div class="form-group">
+                  <label for="searchFirstName">First Name</label>
+                  <input type="text" id="searchFirstName" placeholder="e.g., Sarah">
+                </div>
+                <div class="form-group">
+                  <label for="searchLastName">Last Name</label>
+                  <input type="text" id="searchLastName" placeholder="e.g., Jones">
+                </div>
+                <div style="display:flex; gap:.5rem; align-items:end;">
+                  <button type="button" id="btnSearchDeliveries" class="btn btn-secondary btn-sm">Search</button>
+                  <button type="button" id="btnClearSearch" class="btn btn-ghost btn-sm">Clear</button>
                 </div>
               </div>
-              <div id="replyOutput" class="preview-box" style="margin-top:.5rem; display:none;"></div>
+              <div id="searchResults" class="search-results" style="margin-top:.75rem; display:none;">
+                <div class="search-summary">
+                  <span id="searchResultCount">0</span> deliveries found
+                </div>
+              </div>
             </div>
           </div>
           <div class="filters">
@@ -1723,6 +1754,18 @@
     // Only save collapsed state if user explicitly collapses it
     // This ensures it always starts expanded on fresh page loads
   }
+  
+  // Search functionality event listeners
+  document.getElementById('btnSearchDeliveries')?.addEventListener('click', searchDeliveries);
+  document.getElementById('btnClearSearch')?.addEventListener('click', clearSearch);
+  
+  // Allow search on Enter key press
+  document.getElementById('searchFirstName')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchDeliveries();
+  });
+  document.getElementById('searchLastName')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') searchDeliveries();
+  });
 
  // Preferred name behavior
  const preferredNameInput = document.getElementById("preferredName");
@@ -2517,6 +2560,72 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
       renderDeliveries(filtered);
     });
   }
+  
+  // Search functionality for deliveries
+  function searchDeliveries() {
+    const firstName = document.getElementById('searchFirstName').value.trim().toLowerCase();
+    const lastName = document.getElementById('searchLastName').value.trim().toLowerCase();
+    const searchResults = document.getElementById('searchResults');
+    const resultCount = document.getElementById('searchResultCount');
+    
+    if (!firstName && !lastName) {
+      showToast('Please enter at least a first name or last name to search.', 'info');
+      return;
+    }
+    
+    // Filter deliveries based on search criteria
+    let filtered = lastDeliveries || [];
+    
+    if (firstName && lastName) {
+      // Search for both first and last name
+      filtered = filtered.filter(d => {
+        const fullName = (d.patientFullName || '').toLowerCase();
+        const preferredName = (d.patientPreferredName || '').toLowerCase();
+        return fullName.includes(firstName) && fullName.includes(lastName) || 
+               preferredName.includes(firstName) && preferredName.includes(lastName);
+      });
+    } else if (firstName) {
+      // Search by first name only
+      filtered = filtered.filter(d => {
+        const fullName = (d.patientFullName || '').toLowerCase();
+        const preferredName = (d.patientPreferredName || '').toLowerCase();
+        return fullName.includes(firstName) || preferredName.includes(firstName);
+      });
+    } else if (lastName) {
+      // Search by last name only
+      filtered = filtered.filter(d => {
+        const fullName = (d.patientFullName || '').toLowerCase();
+        const preferredName = (d.patientPreferredName || '').toLowerCase();
+        return fullName.includes(lastName) || preferredName.includes(lastName);
+      });
+    }
+    
+    // Apply channel filter if set
+    const channelSel = document.getElementById('channelFilter');
+    if (channelSel.value !== 'all') {
+      filtered = filtered.filter(d => d.channel === channelSel.value);
+    }
+    
+    // Show results
+    renderDeliveries(filtered);
+    resultCount.textContent = filtered.length;
+    searchResults.style.display = 'block';
+    
+    if (filtered.length === 0) {
+      showToast('No deliveries found matching your search criteria.', 'info');
+    }
+  }
+  
+  function clearSearch() {
+    document.getElementById('searchFirstName').value = '';
+    document.getElementById('searchLastName').value = '';
+    document.getElementById('searchResults').style.display = 'none';
+    
+    // Reset to show all deliveries
+    const channelSel = document.getElementById('channelFilter');
+    const filtered = channelSel.value === 'all' ? lastDeliveries : lastDeliveries.filter(d => d.channel === channelSel.value);
+    renderDeliveries(filtered);
+  }
 
       document.getElementById("patientForm").addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -2642,6 +2751,12 @@ preferredNameInput.addEventListener("input", updateMessageWithPreferredName);
               finalSmsMessage = messageForSms.replace('[TRACKING_URL]', fiveStarReviewLink);
             } else {
               finalSmsMessage = messageForSms.replace('[TRACKING_URL]', ''); // Remove placeholder if no link
+            }
+            
+            // Append opt-out notice for SMS compliance
+            const optOutNotice = 'Reply STOP to stop.';
+            if (!/reply\s+stop/i.test(finalSmsMessage)) {
+              finalSmsMessage = `${finalSmsMessage}\n\n${optOutNotice}`;
             }
             
             const smsPayload = {
